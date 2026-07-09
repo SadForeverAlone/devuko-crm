@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: devuko
+      POSTGRES_PASSWORD: devuko
+      POSTGRES_DB: devuko_crm
+    ports:
+      - "5440:5432"
+    volumes:
+      - devuko_crm_pg:/var/lib/postgresql/data
+
+volumes:
+  devuko_crm_pg:

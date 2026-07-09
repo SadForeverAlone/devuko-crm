@@ -1,0 +1,59 @@
+# Devuko CRM registry — workspaces managed by this platform.
+
+sites:
+  crm.devuko.ru:
+    slug: crm.devuko.ru
+    repo: git@github.com:SadForeverAlone/devuko-crm.git
+    prod:
+      path: /srv/sites/crm.devuko.ru
+      api_port: 8095
+      web_port: 8096
+      domains:
+        - crm.devuko.ru
+    dev:
+      shared_infra: true
+      postgres_host_port: 5440
+      schema_prefix: devuko_crm_
+      vite_port_base: 5180
+      api_port_base: 8095
+      domain_pattern: "{user}.crm.devuko.ru"
+      users:
+        sherli:
+          offset: 1
+          vite_port: 5180
+          api_port: 8095
+          schema: devuko_crm_sherli_dev
+
+  selfpact.ru:
+    slug: selfpact.ru
+    repo: git@github.com:SadForeverAlone/selfpact.git
+    prod:
+      path: /srv/sites/selfpact.ru
+      api_port: 8080
+      web_port: 8088
+      domains:
+        - selfpact.ru
+        - www.selfpact.ru
+        - selfpact.online
+        - www.selfpact.online
+    dev:
+      shared_infra: true          # postgres/redis on platform shared compose
+      postgres_host_port: 5438
+      schema_prefix: selfpact_
+      vite_port_base: 5170        # user offset: sherli=+1, kkkyos=+2, ...
+      api_port_base: 8090         # user offset: sherli=+1, kkkyos=+2, ...
+      domain_pattern: "{user}.selfpact.ru"
+      # Add developers here or run: sudo /opt/platform/bin/dev-add-site.sh <user> selfpact.ru
+      users:
+        sherli:
+          offset: 1
+          vite_port: 5173
+          api_port: 8081
+          schema: selfpact_sherli_dev
+        kkkyos:
+          offset: 2
+          vite_port: 5174
+          api_port: 8082
+          schema: selfpact_kkkyos_dev
+
+# Add new sites by copying the block above and running: site-add.sh <domain>
