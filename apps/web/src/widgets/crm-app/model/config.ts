@@ -4,21 +4,22 @@ import {
   faChartColumn,
   faChartLine,
   faFileLines,
-  faFolderOpen,
   faGear,
-  faListCheck,
-  faPhone,
   faRocket,
+  faServer,
   faSquarePollVertical,
   faUsers,
   faGlobe,
 } from "@fortawesome/free-solid-svg-icons";
-import type { CallRecord, CrmLang, CrmTab, FileRecord, PageRecord, ReportRecord, TaskRecord } from "./types";
+import type { CallRecord, CrmLang, CrmTab, FileRecord, ReportRecord, TaskRecord } from "./types";
 
 export { crmCopy } from "./i18n";
 
 export const crmPlatformNavItems: Array<{ key: CrmTab; label: Record<CrmLang, string>; icon: IconDefinition }> = [
+  { key: "users", label: { ru: "Пользователи", en: "Users" }, icon: faUsers },
   { key: "sites", label: { ru: "Сайты", en: "Sites" }, icon: faGlobe },
+  { key: "logs", label: { ru: "Логи", en: "Logs" }, icon: faChartLine },
+  { key: "settings", label: { ru: "Сервер", en: "Server" }, icon: faServer },
 ];
 
 export const crmNavItems: Array<{ key: CrmTab; label: Record<CrmLang, string>; icon: IconDefinition }> = [
@@ -26,16 +27,13 @@ export const crmNavItems: Array<{ key: CrmTab; label: Record<CrmLang, string>; i
   { key: "logs", label: { ru: "Логи", en: "Logs" }, icon: faChartLine },
   { key: "users", label: { ru: "Пользователи", en: "Users" }, icon: faUsers },
   { key: "promises", label: { ru: "Обещания", en: "Promises" }, icon: faRocket },
-  { key: "settings", label: { ru: "Настройки", en: "Settings" }, icon: faGear },
+  { key: "pages", label: { ru: "Страницы", en: "Pages" }, icon: faFileLines },
   { key: "contacts", label: { ru: "Контакты", en: "Contact Us" }, icon: faAddressBook },
+  { key: "settings", label: { ru: "Настройки", en: "Settings" }, icon: faGear },
 ];
 
 export const crmShortcutItems: Array<{ key: CrmTab; label: Record<CrmLang, string>; icon: IconDefinition }> = [
-  { key: "pages", label: { ru: "Страницы", en: "Pages" }, icon: faFileLines },
-  { key: "files", label: { ru: "Файлы", en: "Files" }, icon: faFolderOpen },
-  { key: "tasks", label: { ru: "Задачи", en: "Tasks" }, icon: faListCheck },
   { key: "reports", label: { ru: "Отчёты", en: "Reports" }, icon: faSquarePollVertical },
-  { key: "call-tracker", label: { ru: "Звонки", en: "Call Tracker" }, icon: faPhone },
 ];
 
 export const mockTasks: TaskRecord[] = [
@@ -63,15 +61,6 @@ export const mockTasks: TaskRecord[] = [
     createdAt: "2026-04-12T18:45:00.000Z",
     owner: "Moderation",
   },
-];
-
-export const mockPages: PageRecord[] = [
-  { id: "PG-01", page: "/", views: 6824, uniqueUsers: 4911, conversion: "12.4%" },
-  { id: "PG-02", page: "/auth", views: 3142, uniqueUsers: 2804, conversion: "26.8%" },
-  { id: "PG-03", page: "/profile", views: 2241, uniqueUsers: 1682, conversion: "44.2%" },
-  { id: "PG-04", page: "/create-action", views: 1935, uniqueUsers: 1406, conversion: "38.0%" },
-  { id: "PG-05", page: "/proof-submit", views: 1288, uniqueUsers: 914, conversion: "57.6%" },
-  { id: "PG-06", page: "/help", views: 803, uniqueUsers: 694, conversion: "18.3%" },
 ];
 
 export const mockFiles: FileRecord[] = [

@@ -1,5 +1,16 @@
+export { AutomationSection } from "./AutomationSection";
 export { DashboardSection } from "./DashboardSection";
 export { DashboardDetailSection } from "./DashboardDetailSection";
+export { DeploymentsSection } from "./DeploymentsSection";
+export { InfrastructureSectionView } from "./InfrastructureSection";
+export { MonitoringSection } from "./MonitoringSection";
+export { NotificationsSection } from "./NotificationsSection";
+export { PlatformAdminsSection } from "./PlatformAdminsSection";
+export { PlatformDashboardV2Section } from "./PlatformDashboardV2Section";
+export { PlatformLogsSection } from "./PlatformLogsSection";
+export { ProvisionLogTable } from "./ProvisionLogTable";
+export { PlatformSettingsSection } from "./PlatformSettingsSection";
+export { ProjectDetailSection } from "./ProjectDetailSection";
 export { LogsSection } from "./LogsSection";
 export { UsersSection } from "./UsersSection";
 export { PromisesSection } from "./PromisesSection";

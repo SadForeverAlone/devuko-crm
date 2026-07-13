@@ -14,8 +14,8 @@ require_root
 
 mkdir -p "$PROD_ROOT"/{repo,shared,compose,releases}
 mkdir -p "/var/lib/platform/${DOMAIN}"
-chown -R deploy:selfpact "$PROD_ROOT" 2>/dev/null || chown -R root:selfpact "$PROD_ROOT"
-chmod -R g+rwX "$PROD_ROOT"
+chown -R deploy:selfpact "$PROD_ROOT" 2>/dev/null || chown -R root:selfpact "$PROD_ROOT" 2>/dev/null || true
+chmod -R g+rwX "$PROD_ROOT" 2>/dev/null || true
 
 if [[ -n "$GIT_URL" ]] && [[ ! -d "$PROD_ROOT/repo/.git" ]]; then
   git clone "$GIT_URL" "$PROD_ROOT/repo"

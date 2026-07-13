@@ -1,3 +1,4 @@
+import { PlatformPage } from "@/shared/ui/platform";
 import { crmCopy } from "../../model/i18n";
 import { getCrmLocaleTag, getStatusClassName, translateCrmStatus } from "../../model/lib";
 import type { ReportsSectionProps } from "./sectionTypes";
@@ -6,12 +7,8 @@ export function ReportsSection({ crmLang, reports }: ReportsSectionProps) {
   const ui = crmCopy[crmLang];
   const dateLocale = getCrmLocaleTag(crmLang);
   return (
-    <section className="crm-stack">
+    <PlatformPage title={ui.reportsTitle} subtitle={ui.reportsSubtitle}>
       <article className="crm-panel crm-table-card">
-        <div className="crm-section-head">
-          <h3>{ui.reportsTitle}</h3>
-          <span className="crm-muted">{ui.reportsSubtitle}</span>
-        </div>
         <div className="crm-table-wrap">
           <table className="crm-data-table">
             <thead>
@@ -60,6 +57,6 @@ export function ReportsSection({ crmLang, reports }: ReportsSectionProps) {
           ))}
         </div>
       </article>
-    </section>
+    </PlatformPage>
   );
 }

@@ -9,6 +9,7 @@
     "strict": true,
     "noEmit": true,
     "skipLibCheck": true,
+    "types": ["vite/client"],
     "rootDir": "./src",
     "paths": {
       "@/*": ["./src/*"]

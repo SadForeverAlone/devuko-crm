@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+import { PlatformPage } from "@/shared/ui/platform";
 import { crmCopy } from "../../model/config";
 import { getCrmLocaleTag, translateGender } from "../../model/lib";
 import type { UserRoleCode } from "../../model/i18n";
@@ -123,17 +124,16 @@ export function DashboardDetailSection({
   const content = contentByPart[part];
 
   return (
-    <section className="crm-stack">
-      <article className="crm-panel crm-table-card">
-        <div className="crm-section-head">
-          <button type="button" className="crm-btn crm-btn--ghost" onClick={onBack}>
-            <FontAwesomeIcon icon={faArrowLeft} />
-            {ui.dashboardBack}
-          </button>
-          <span className="crm-muted">{content.title}</span>
-        </div>
-        {content.body}
-      </article>
-    </section>
+    <PlatformPage
+      title={content.title}
+      actions={
+        <button type="button" className="crm-btn crm-btn--ghost" onClick={onBack}>
+          <FontAwesomeIcon icon={faArrowLeft} />
+          {ui.dashboardBack}
+        </button>
+      }
+    >
+      <article className="crm-panel crm-table-card">{content.body}</article>
+    </PlatformPage>
   );
 }

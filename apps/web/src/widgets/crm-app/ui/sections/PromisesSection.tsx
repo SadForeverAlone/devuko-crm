@@ -1,3 +1,4 @@
+import { PlatformPage } from "@/shared/ui/platform";
 import { crmCopy } from "../../model/i18n";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
@@ -17,12 +18,8 @@ export function PromisesSection({
 
   if (promisesView === "list") {
     return (
-      <section className="crm-stack">
+      <PlatformPage title={ui.promisesTableTitle} subtitle={ui.promisesTableHint}>
         <article className="crm-panel crm-table-card">
-          <div className="crm-section-head">
-            <h3>{ui.promisesTableTitle}</h3>
-            <span className="crm-muted">{ui.promisesTableHint}</span>
-          </div>
           <div className="crm-table-wrap">
             <table className="crm-data-table">
               <thead>
@@ -70,7 +67,7 @@ export function PromisesSection({
             </table>
           </div>
         </article>
-      </section>
+      </PlatformPage>
     );
   }
 
@@ -79,22 +76,21 @@ export function PromisesSection({
   }
 
   return (
-    <section className="crm-stack">
+    <PlatformPage
+      title={selectedPromise.title}
+      subtitle={selectedPromise.id}
+      actions={
+        <button
+          type="button"
+          className="crm-btn crm-btn--ghost"
+          onClick={() => setPromisesView("list")}
+        >
+          <FontAwesomeIcon icon={faArrowLeft} />
+          {ui.backToPromises}
+        </button>
+      }
+    >
       <article className="crm-entity-detail crm-panel">
-        <div className="crm-entity-detail__hero">
-          <div className="crm-section-head">
-            <button
-              type="button"
-              className="crm-btn crm-btn--ghost"
-              onClick={() => setPromisesView("list")}
-            >
-              <FontAwesomeIcon icon={faArrowLeft} />
-              {ui.backToPromises}
-            </button>
-          </div>
-          <p className="crm-entity-detail__id">{selectedPromise.id}</p>
-          <h2 className="crm-entity-detail__title">{selectedPromise.title}</h2>
-        </div>
         <div className="crm-entity-detail__body">
           <p className="crm-entity-detail__text">{selectedPromise.description}</p>
           <div className="crm-entity-stats">
@@ -143,6 +139,6 @@ export function PromisesSection({
           </div>
         </div>
       </article>
-    </section>
+    </PlatformPage>
   );
 }

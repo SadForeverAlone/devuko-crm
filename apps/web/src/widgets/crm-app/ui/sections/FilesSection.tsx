@@ -1,3 +1,4 @@
+import { PlatformPage } from "@/shared/ui/platform";
 import { mockFiles } from "../../model/config";
 import { crmCopy } from "../../model/i18n";
 import { getCrmLocaleTag, getStatusClassName, translateCrmStatus } from "../../model/lib";
@@ -7,12 +8,8 @@ export function FilesSection({ crmLang }: FilesSectionProps) {
   const ui = crmCopy[crmLang];
   const dateLocale = getCrmLocaleTag(crmLang);
   return (
-    <section className="crm-stack">
+    <PlatformPage title={ui.filesTitle} subtitle={ui.filesSubtitle}>
       <article className="crm-panel crm-table-card">
-        <div className="crm-section-head">
-          <h3>{ui.filesTitle}</h3>
-          <span className="crm-muted">{ui.filesSubtitle}</span>
-        </div>
         <div className="crm-table-wrap">
           <table className="crm-data-table">
             <thead>
@@ -44,6 +41,6 @@ export function FilesSection({ crmLang }: FilesSectionProps) {
           </table>
         </div>
       </article>
-    </section>
+    </PlatformPage>
   );
 }

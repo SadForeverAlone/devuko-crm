@@ -1,4 +1,5 @@
 import "./crm.css";
+import "./platform.css";
 import { useCrmWorkspace } from "../model/useCrmWorkspace";
 import { CrmAuthenticatedLayout } from "./CrmAuthenticatedLayout";
 import { CrmLoginScreen } from "./CrmLoginScreen";

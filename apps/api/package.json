@@ -8,7 +8,9 @@
   "scripts": {
     "start:dev": "nest start --watch",
     "build": "nest build",
-    "start": "node dist/main.js"
+    "start": "node dist/main.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",
@@ -27,11 +29,14 @@
     "rxjs": "^7.8.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.1",
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@types/node": "^25.0.0",
     "@types/passport-jwt": "^4.0.1",
     "@types/pg": "^8.20.0",
-    "typescript": "^5.7.0"
+    "eslint": "^9.39.1",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.48.0"
   }
 }

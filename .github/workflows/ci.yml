@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [web, api]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "25"
+          cache: npm
+          cache-dependency-path: apps/${{ matrix.app }}/package-lock.json
+      - name: Install dependencies
+        working-directory: apps/${{ matrix.app }}
+        run: npm ci
+      - name: Typecheck
+        working-directory: apps/${{ matrix.app }}
+        run: npm run typecheck
+      - name: Lint
+        working-directory: apps/${{ matrix.app }}
+        run: npm run lint

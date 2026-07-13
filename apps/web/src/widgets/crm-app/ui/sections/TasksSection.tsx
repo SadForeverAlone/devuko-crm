@@ -1,3 +1,4 @@
+import { PlatformPage } from "@/shared/ui/platform";
 import { mockTasks } from "../../model/config";
 import { crmCopy } from "../../model/i18n";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -19,12 +20,8 @@ export function TasksSection({
 
   if (tasksView === "list") {
     return (
-      <section className="crm-stack">
+      <PlatformPage title={ui.tasks} subtitle={ui.tasksTableHint}>
         <article className="crm-panel crm-table-card">
-          <div className="crm-section-head">
-            <h3>{ui.tasks}</h3>
-            <span className="crm-muted">{ui.tasksTableHint}</span>
-          </div>
           <div className="crm-table-wrap">
             <table className="crm-data-table">
               <thead>
@@ -62,27 +59,26 @@ export function TasksSection({
             </table>
           </div>
         </article>
-      </section>
+      </PlatformPage>
     );
   }
 
   return (
-    <section className="crm-stack">
+    <PlatformPage
+      title={selectedTask.title}
+      subtitle={selectedTask.id}
+      actions={
+        <button
+          type="button"
+          className="crm-btn crm-btn--ghost"
+          onClick={() => setTasksView("list")}
+        >
+          <FontAwesomeIcon icon={faArrowLeft} />
+          {ui.backToTasks}
+        </button>
+      }
+    >
       <article className="crm-entity-detail crm-panel">
-        <div className="crm-entity-detail__hero">
-          <div className="crm-section-head">
-            <button
-              type="button"
-              className="crm-btn crm-btn--ghost"
-              onClick={() => setTasksView("list")}
-            >
-              <FontAwesomeIcon icon={faArrowLeft} />
-              {ui.backToTasks}
-            </button>
-          </div>
-          <p className="crm-entity-detail__id">{selectedTask.id}</p>
-          <h2 className="crm-entity-detail__title">{selectedTask.title}</h2>
-        </div>
         <div className="crm-entity-detail__body">
           <p className="crm-entity-detail__text">{selectedTask.description}</p>
           <div className="crm-entity-stats">
@@ -103,6 +99,6 @@ export function TasksSection({
           </div>
         </div>
       </article>
-    </section>
+    </PlatformPage>
   );
 }

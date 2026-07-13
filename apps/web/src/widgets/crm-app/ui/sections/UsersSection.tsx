@@ -1,6 +1,7 @@
 import { useId } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+import { PlatformPage } from "@/shared/ui/platform";
 import { crmCopy } from "../../model/i18n";
 import { resizeImageFileToDataUrl } from "../../model/resizeAvatarImage";
 import {
@@ -37,21 +38,20 @@ export function UsersSection({
 
   if (usersView === "list") {
     return (
-      <section className="crm-stack">
+      <PlatformPage
+        title={ui.users}
+        subtitle={String(usersWithMeta.length)}
+        actions={
+          <button
+            type="button"
+            className="crm-btn crm-btn--primary crm-btn--add-user"
+            onClick={onNavigateCreateUser}
+          >
+            {ui.addUser}
+          </button>
+        }
+      >
         <article className="crm-panel crm-table-card">
-          <div className="crm-section-head">
-            <h3>{ui.users}</h3>
-            <div className="crm-section-head__actions">
-              <span className="crm-muted">{usersWithMeta.length}</span>
-              <button
-                type="button"
-                className="crm-btn crm-btn--primary crm-btn--add-user"
-                onClick={onNavigateCreateUser}
-              >
-                {ui.addUser}
-              </button>
-            </div>
-          </div>
           <label className="crm-users-search">
             <input
               className="spx-input crm-input"
@@ -155,7 +155,7 @@ export function UsersSection({
             </table>
           </div>
         </article>
-      </section>
+      </PlatformPage>
     );
   }
 
@@ -169,19 +169,21 @@ export function UsersSection({
     : null;
 
   return (
-    <section className="crm-stack">
+    <PlatformPage
+      title={isCreateUser ? ui.newUserTitle : selectedUser!.displayName}
+      subtitle={isCreateUser ? ui.newUserSubtitle : roleLabel ?? undefined}
+      actions={
+        <button
+          type="button"
+          className="crm-btn crm-btn--ghost"
+          onClick={() => setUsersView("list")}
+        >
+          <FontAwesomeIcon icon={faArrowLeft} />
+          {ui.backToUsers}
+        </button>
+      }
+    >
       <article className="crm-user-editor crm-panel">
-        <div className="crm-section-head">
-          <button
-            type="button"
-            className="crm-btn crm-btn--ghost"
-            onClick={() => setUsersView("list")}
-          >
-            <FontAwesomeIcon icon={faArrowLeft} />
-            {ui.backToUsers}
-          </button>
-        </div>
-
         {isCreateUser ? (
           <div className="crm-user-card crm-user-card--create">
             <label className="crm-user-avatar-upload" htmlFor={newUserAvatarInputId}>
@@ -383,6 +385,6 @@ export function UsersSection({
           {isCreateUser ? ui.createUser : ui.saveUser}
         </button>
       </article>
-    </section>
+    </PlatformPage>
   );
 }

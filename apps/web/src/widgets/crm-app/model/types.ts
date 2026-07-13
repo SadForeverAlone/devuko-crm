@@ -12,7 +12,14 @@ export type CrmTab =
   | "call-tracker"
   | "settings"
   | "contacts"
-  | "sites";
+  | "sites"
+  | "projects"
+  | "infrastructure"
+  | "deployments"
+  | "monitoring"
+  | "automation"
+  | "team"
+  | "notifications";
 
 export type CrmLang = "ru" | "en";
 

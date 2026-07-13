@@ -88,26 +88,16 @@ export type DashboardPart =
 
 export type LogsSectionProps = {
   crmLang: CrmLang;
+  logs: VisibleLogRecord[];
+  logCategories: Array<{ action: string; count: number }>;
   rowLimitInput: string;
   setRowLimitInput: Dispatch<SetStateAction<string>>;
   logDateFrom: string;
   setLogDateFrom: Dispatch<SetStateAction<string>>;
   logDateTo: string;
   setLogDateTo: Dispatch<SetStateAction<string>>;
-  logRoleFilter: "all" | UserRoleCode;
-  setLogRoleFilter: Dispatch<SetStateAction<"all" | UserRoleCode>>;
   logFilter: string;
   setLogFilter: Dispatch<SetStateAction<string>>;
-  logCategories: Array<{ action: string; count: number }>;
-  activeLogFilterMenu: LogFilterMenu;
-  setActiveLogFilterMenu: Dispatch<SetStateAction<LogFilterMenu>>;
-  logColumnFilters: LogColumnFilters;
-  setLogColumnFilters: Dispatch<SetStateAction<LogColumnFilters>>;
-  paginatedLogs: VisibleLogRecord[];
-  logPageCount: number;
-  logPage: number;
-  setLogPage: Dispatch<SetStateAction<number>>;
-  logRowsPerPage: number;
 };
 
 export type UsersSectionProps = {

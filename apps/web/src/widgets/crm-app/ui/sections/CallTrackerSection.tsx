@@ -1,3 +1,4 @@
+import { PlatformPage } from "@/shared/ui/platform";
 import { mockCalls } from "../../model/config";
 import { crmCopy } from "../../model/i18n";
 import { getStatusClassName, translateCrmStatus } from "../../model/lib";
@@ -6,12 +7,8 @@ import type { CallTrackerSectionProps } from "./sectionTypes";
 export function CallTrackerSection({ crmLang }: CallTrackerSectionProps) {
   const ui = crmCopy[crmLang];
   return (
-    <section className="crm-stack">
+    <PlatformPage title={ui.callTrackerTitle} subtitle={ui.callTrackerSubtitle}>
       <article className="crm-panel crm-table-card">
-        <div className="crm-section-head">
-          <h3>{ui.callTrackerTitle}</h3>
-          <span className="crm-muted">{ui.callTrackerSubtitle}</span>
-        </div>
         <div className="crm-table-wrap">
           <table className="crm-data-table">
             <thead>
@@ -45,6 +42,6 @@ export function CallTrackerSection({ crmLang }: CallTrackerSectionProps) {
           </table>
         </div>
       </article>
-    </section>
+    </PlatformPage>
   );
 }

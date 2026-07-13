@@ -1,3 +1,4 @@
+import { PlatformPage } from "@/shared/ui/platform";
 import { crmCopy } from "../../model/config";
 import { getCrmLocaleTag, translateGender } from "../../model/lib";
 import type { DashboardSectionProps } from "./sectionTypes";
@@ -46,17 +47,13 @@ export function DashboardSection({
   const ui = crmCopy[crmLang];
   const dateLocale = getCrmLocaleTag(crmLang);
   return (
-    <section className="crm-stack">
-      <header className="crm-topbar crm-panel">
-        <div>
-          <h1 className="crm-topbar__title">
-            {selectedUserName
-              ? `${ui.hello} ${selectedUserName}`
-              : ui.dashboardTitle}
-          </h1>
-          <p className="crm-topbar__subtitle">{dashboardSubtitle}</p>
-        </div>
-      </header>
+    <PlatformPage
+      title={
+        selectedUserName ? `${ui.hello} ${selectedUserName}` : ui.dashboardTitle
+      }
+      subtitle={dashboardSubtitle}
+    >
+      <div className="crm-page__block">
       <div className="crm-stat-row">
         <article
           className="crm-stat-card crm-panel crm-dashboard-link"
@@ -91,6 +88,8 @@ export function DashboardSection({
           <b className="crm-stat-card__value">{ui.proofsPendingReview}</b>
         </article>
       </div>
+      </div>
+      <div className="crm-page__block">
       <div className="crm-dashboard-grid">
         <article
           className="crm-side-card crm-panel crm-dashboard-link"
@@ -194,6 +193,7 @@ export function DashboardSection({
           />
         </article>
       </div>
-    </section>
+      </div>
+    </PlatformPage>
   );
 }

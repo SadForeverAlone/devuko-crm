@@ -12,6 +12,10 @@ import { existsSync } from "fs";
 import { join } from "path";
 import { promisify } from "util";
 import { DatabaseService } from "../database/database.service";
+import { readDiskUsage } from "./disk-usage";
+import { PlatformAuditService } from "./platform-audit.service";
+
+type AuditActor = { id?: string; email?: string; name?: string };
 
 const execFileAsync = promisify(execFile);
 
@@ -60,14 +64,41 @@ export class PlatformService implements OnModuleInit {
   private readonly logger = new Logger(PlatformService.name);
   private ready = false;
 
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly audit: PlatformAuditService
+  ) {}
 
   async onModuleInit() {
     try {
       await this.ensurePlatformTables();
       await this.seedSelfpactFromEnv();
+      await this.syncSiteStatusesFromDisk();
     } catch (error) {
       this.logger.warn(`Platform init skipped: ${(error as Error).message}`);
+    }
+  }
+
+  private siteProdPath(site: { domain: string; prodPath?: string | null }) {
+    return site.prodPath?.trim() || `/srv/sites/${site.domain}`;
+  }
+
+  private isSiteDeployed(site: { domain: string; prodPath?: string | null }) {
+    const path = this.siteProdPath(site);
+    if (!existsSync(path)) return false;
+    return existsSync(join(path, "repo")) || existsSync(join(path, "compose"));
+  }
+
+  private async syncSiteStatusesFromDisk() {
+    const sites = await this.listSites();
+    for (const site of sites) {
+      if (site.status === "active") continue;
+      if (!this.isSiteDeployed(site)) continue;
+      await this.db.execute(
+        `UPDATE "CrmSite" SET "status" = 'active', "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = $1`,
+        [site.id]
+      );
+      this.logger.log(`Site ${site.domain} marked active (production path exists)`);
     }
   }
 
@@ -130,9 +161,13 @@ export class PlatformService implements OnModuleInit {
     await this.db.execute(`ALTER TABLE "CrmSite" ADD COLUMN IF NOT EXISTS "apiBaseUrl" TEXT`);
     await this.db.execute(`
       INSERT INTO "CrmWorkspace" ("id", "slug", "label", "kind", "siteId")
-      VALUES ($1, 'platform', 'Platform', 'platform', NULL)
+      VALUES ($1, 'platform', 'Devuko', 'platform', NULL)
       ON CONFLICT ("id") DO NOTHING
     `, [PLATFORM_WORKSPACE_ID]);
+    await this.db.execute(
+      `UPDATE "CrmWorkspace" SET "label" = 'Devuko' WHERE "id" = $1`,
+      [PLATFORM_WORKSPACE_ID]
+    );
     await this.syncFromRegistry();
     this.ready = true;
   }
@@ -209,7 +244,7 @@ export class PlatformService implements OnModuleInit {
     return this.mapSiteRow(rows[0]);
   }
 
-  async createSite(input: CreateSiteInput): Promise<CrmSiteRow> {
+  async createSite(input: CreateSiteInput, actor?: AuditActor): Promise<CrmSiteRow> {
     await this.ensurePlatformTables();
     const domain = input.domain.trim().toLowerCase();
     if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(domain)) {
@@ -253,14 +288,23 @@ export class PlatformService implements OnModuleInit {
 
     let site = await this.getSite(siteId);
     if (input.provision !== false) {
-      site = await this.provisionSite(siteId);
+      site = await this.provisionSite(siteId, actor);
     }
+    await this.audit.log({
+      actorAdminId: actor?.id ?? null,
+      actorEmail: actor?.email ?? null,
+      actorName: actor?.name ?? null,
+      action: "site.create",
+      target: domain,
+      ok: true,
+    });
     return site;
   }
 
   async updateSite(
     siteId: string,
-    input: { repo?: string; apiPort?: number; webPort?: number; apiBaseUrl?: string; extraDomains?: string[] }
+    input: { repo?: string; apiPort?: number; webPort?: number; apiBaseUrl?: string; extraDomains?: string[] },
+    actor?: AuditActor
   ): Promise<CrmSiteRow> {
     await this.ensurePlatformTables();
     await this.getSite(siteId);
@@ -289,10 +333,34 @@ export class PlatformService implements OnModuleInit {
     }
     params.push(siteId);
     await this.db.execute(`UPDATE "CrmSite" SET ${sets.join(", ")} WHERE "id" = $${idx}`, params);
-    return this.getSite(siteId);
+    const updated = await this.getSite(siteId);
+    await this.audit.log({
+      actorAdminId: actor?.id ?? null,
+      actorEmail: actor?.email ?? null,
+      actorName: actor?.name ?? null,
+      action: "site.update",
+      target: updated.domain,
+      ok: true,
+    });
+    return updated;
   }
 
-  async provisionSite(siteId: string): Promise<CrmSiteRow> {
+  async deleteSite(siteId: string, actor?: AuditActor) {
+    const site = await this.getSite(siteId);
+    await this.db.execute(`DELETE FROM "CrmSite" WHERE "id" = $1`, [siteId]);
+    await this.db.execute(`DELETE FROM "CrmWorkspace" WHERE "id" = $1`, [site.workspaceId]);
+    await this.audit.log({
+      actorAdminId: actor?.id ?? null,
+      actorEmail: actor?.email ?? null,
+      actorName: actor?.name ?? null,
+      action: "site.delete",
+      target: site.domain,
+      ok: true,
+    });
+    return { ok: true as const };
+  }
+
+  async provisionSite(siteId: string, actor?: AuditActor): Promise<CrmSiteRow> {
     const site = await this.getSite(siteId);
     const log: CrmSiteRow["provisionLog"] = [...site.provisionLog];
     const pushLog = (step: string, ok: boolean, message: string) => {
@@ -302,9 +370,10 @@ export class PlatformService implements OnModuleInit {
     await this.db.execute(`UPDATE "CrmSite" SET "status" = 'provisioning', "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = $1`, [siteId]);
 
     const script = join(this.repoRoot(), "platform/bin/site-register.sh");
+    const deployedBefore = this.isSiteDeployed(site);
     if (existsSync(script)) {
       try {
-        const { stdout, stderr } = await execFileAsync("bash", [script, site.domain], {
+        const { stdout, stderr } = await execFileAsync("bash", [script, site.domain, "--registry-only"], {
           env: {
             ...process.env,
             SITE_REPO: site.repo ?? "",
@@ -315,25 +384,74 @@ export class PlatformService implements OnModuleInit {
           },
           timeout: 120_000,
         });
-        pushLog("site-register", true, (stdout || stderr || "ok").trim().slice(0, 2000));
+        const output = (stdout || stderr || "ok").trim();
+        pushLog("site-register", true, output.slice(0, 2000));
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         pushLog("site-register", false, message.slice(0, 2000));
+        const deployedAfter = this.isSiteDeployed(site);
+        if (!deployedBefore && !deployedAfter) {
+          await this.db.execute(
+            `UPDATE "CrmSite" SET "status" = 'error', "provisionLog" = $2::jsonb, "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = $1`,
+            [siteId, JSON.stringify(log)]
+          );
+          await this.audit.log({
+            actorAdminId: actor?.id ?? null,
+            actorEmail: actor?.email ?? null,
+            actorName: actor?.name ?? null,
+            action: "site.provision",
+            target: site.domain,
+            detail: message.slice(0, 500),
+            ok: false,
+          });
+          return this.getSite(siteId);
+        }
+        pushLog(
+          "site-deploy",
+          true,
+          "Реестр не обновлён, но prod-каталог уже существует — сайт считается активным"
+        );
+      }
+    } else {
+      const hint = `Скрипт не найден: ${script}. Проверьте PLATFORM_REPO_ROOT и монтирование platform/ в контейнер API.`;
+      if (deployedBefore) {
+        pushLog("site-register", true, `${hint} (prod уже развёрнут)`);
+      } else {
+        pushLog("site-register", false, hint);
         await this.db.execute(
           `UPDATE "CrmSite" SET "status" = 'error', "provisionLog" = $2::jsonb, "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = $1`,
           [siteId, JSON.stringify(log)]
         );
+        await this.audit.log({
+          actorAdminId: actor?.id ?? null,
+          actorEmail: actor?.email ?? null,
+          actorName: actor?.name ?? null,
+          action: "site.provision",
+          target: site.domain,
+          detail: hint.slice(0, 500),
+          ok: false,
+        });
         return this.getSite(siteId);
       }
-    } else {
-      pushLog("site-register", true, "Script not found — dev mode");
     }
 
     await this.db.execute(
       `UPDATE "CrmSite" SET "status" = 'active', "provisionLog" = $2::jsonb, "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = $1`,
       [siteId, JSON.stringify(log)]
     );
+    await this.audit.log({
+      actorAdminId: actor?.id ?? null,
+      actorEmail: actor?.email ?? null,
+      actorName: actor?.name ?? null,
+      action: "site.provision",
+      target: site.domain,
+      ok: true,
+    });
     return this.getSite(siteId);
+  }
+
+  async listPlatformLogs(input?: { limit?: number; offset?: number }) {
+    return this.audit.list(input);
   }
 
   private async seedSelfpactFromEnv() {
@@ -402,5 +520,18 @@ export class PlatformService implements OnModuleInit {
       { timeout: 10_000 }
     );
     return JSON.parse(stdout) as { sites?: Record<string, Record<string, unknown>> };
+  }
+
+  async getPlatformStatus() {
+    const [storageUsage, lastAuditActivityAt] = await Promise.all([
+      readDiskUsage("/srv"),
+      this.audit.lastActivityAt(),
+    ]);
+    return {
+      serverDateTime: new Date().toISOString(),
+      serverTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      lastAuditActivityAt,
+      storageUsage,
+    };
   }
 }

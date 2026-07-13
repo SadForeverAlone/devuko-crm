@@ -13,6 +13,13 @@ export function getCrmLocaleTag(lang: CrmLang): string {
   return CRM_LOCALE_TAGS[lang];
 }
 
+export function formatStoragePathLabel(path: string | null | undefined, lang: CrmLang) {
+  if (!path || path === "/") {
+    return crmCopy[lang].platformStorageRoot;
+  }
+  return path;
+}
+
 export function getUserInitials(name: string) {
   return name
     .split(" ")
@@ -79,7 +86,7 @@ export function buildCountryMetrics(users: Array<CrmUser & { country: string }>)
 
 export function buildRoleOverview(
   users: Array<CrmUser & { roleCode: UserRoleCode }>,
-  logs: Array<CrmLog & { role?: UserRoleCode }>,
+  logs: Array<{ role?: UserRoleCode }>,
   lang: CrmLang,
 ) {
   const roleUsers = new Map<UserRoleCode, number>();

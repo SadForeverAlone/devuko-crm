@@ -1,3 +1,8 @@
+:root {
+  --crm-input-focus-border: rgba(139, 92, 246, 0.45);
+  --crm-input-focus-ring: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
 .spx-input,
 .crm-input {
   width: 100%;
@@ -7,6 +12,39 @@
   border-radius: 10px;
   padding: 10px 12px;
   font: inherit;
+  box-sizing: border-box;
+  outline: none;
+  box-shadow: none;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+.spx-input:focus,
+.spx-input:focus-visible,
+.crm-input:focus,
+.crm-input:focus-visible {
+  border-color: var(--crm-input-focus-border);
+  box-shadow: var(--crm-input-focus-ring);
+}
+
+.spx-input:-webkit-autofill,
+.spx-input:-webkit-autofill:hover,
+.spx-input:-webkit-autofill:focus,
+.crm-input:-webkit-autofill,
+.crm-input:-webkit-autofill:hover,
+.crm-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #f4f4f5;
+  caret-color: #f4f4f5;
+  transition: background-color 99999s ease-out;
+  -webkit-box-shadow: 0 0 0 1000px rgba(20, 20, 24, 0.96) inset;
+}
+
+.spx-form-error {
+  margin: 10px 0 0;
+  color: #f87171;
+  font-size: 13px;
 }
 
 .devuko-toast-stack {
@@ -15,14 +53,37 @@
   bottom: 16px;
   z-index: 1000;
   display: grid;
-  gap: 8px;
+  gap: 10px;
+  pointer-events: none;
 }
 
 .devuko-toast {
-  padding: 12px 16px;
-  border-radius: 12px;
-  background: rgba(30, 30, 36, 0.95);
-  border: 1px solid rgba(139, 92, 246, 0.35);
-  color: #fff;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  padding: 13px 18px;
+  border-radius: 14px;
+  background: rgba(22, 22, 26, 0.96);
+  border: 1px solid rgba(139, 92, 246, 0.32);
+  color: #f4f4f5;
+  font-family: "General Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  pointer-events: auto;
+  animation: devuko-toast-in 0.28s ease-out;
+}
+
+@keyframes devuko-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }

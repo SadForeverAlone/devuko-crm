@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Headers,
   Param,
@@ -11,6 +12,8 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { CrmAdminService } from "./crm-admin.service";
+import { PlatformDeployService } from "./platform-deploy.service";
+import { PlatformMetricsService } from "./platform-metrics.service";
 import { PlatformService } from "./platform.service";
 import { WorkspaceProxyService } from "./workspace-proxy.service";
 import { AdminGuard, JwtAuthGuard } from "./guards";
@@ -21,6 +24,10 @@ function workspaceFromRequest(headers: Record<string, string | string[] | undefi
   const raw = headers["x-crm-workspace-id"];
   const fromHeader = Array.isArray(raw) ? raw[0] : raw;
   return fromHeader?.trim() || undefined;
+}
+
+function auditActor(req: { user?: { sub?: string; email?: string; name?: string } }) {
+  return { id: req.user?.sub, email: req.user?.email, name: req.user?.name };
 }
 
 @Controller("crm-auth")
@@ -36,7 +43,92 @@ export class CrmAuthController {
 @Controller("admin/crm")
 @UseGuards(JwtAuthGuard, AdminGuard)
 export class CrmPlatformController {
-  constructor(private readonly platform: PlatformService) {}
+  constructor(
+    private readonly platform: PlatformService,
+    private readonly admins: CrmAdminService,
+    private readonly metrics: PlatformMetricsService,
+    private readonly deploy: PlatformDeployService
+  ) {}
+
+  @Get("session")
+  session(@Req() req: { user?: { sub?: string } }) {
+    return this.admins.getSession(req.user?.sub ?? "");
+  }
+
+  @Get("platform-logs")
+  platformLogs(
+    @Query() query: { limit?: string; offset?: string }
+  ) {
+    return this.platform.listPlatformLogs({
+      limit: query.limit ? Number(query.limit) : undefined,
+      offset: query.offset ? Number(query.offset) : undefined,
+    });
+  }
+
+  @Get("admins")
+  listAdmins(
+    @Query()
+    query: {
+      search?: string;
+      orderBy?: "createdAt" | "email" | "displayName" | "login" | "firstName";
+      orderDir?: "asc" | "desc";
+      limit?: string;
+      offset?: string;
+    }
+  ) {
+    return this.admins.listAdmins({
+      search: query.search,
+      orderBy: query.orderBy,
+      orderDir: query.orderDir,
+      limit: query.limit ? Number(query.limit) : undefined,
+      offset: query.offset ? Number(query.offset) : undefined,
+    });
+  }
+
+  @Post("admins")
+  createAdmin(
+    @Body()
+    body: {
+      login?: string;
+      email?: string;
+      password?: string;
+      firstName?: string;
+      lastName?: string;
+    },
+    @Req() req: { user?: { sub?: string; email?: string; name?: string } }
+  ) {
+    return this.admins.createAdmin(
+      {
+        login: body.login ?? "",
+        email: body.email ?? "",
+        password: body.password ?? "",
+        firstName: body.firstName ?? "",
+        lastName: body.lastName ?? "",
+      },
+      auditActor(req)
+    );
+  }
+
+  @Patch("admins/:id")
+  patchAdmin(
+    @Param("id") id: string,
+    @Body()
+    body: {
+      login?: string;
+      email?: string;
+      password?: string;
+      firstName?: string;
+      lastName?: string;
+    },
+    @Req() req: { user?: { sub?: string; email?: string; name?: string } }
+  ) {
+    return this.admins.updateAdmin(id, body, auditActor(req));
+  }
+
+  @Delete("admins/:id")
+  deleteAdmin(@Param("id") id: string, @Req() req: { user?: { sub?: string; email?: string; name?: string } }) {
+    return this.admins.deleteAdmin(id, req.user?.sub ?? "", req.user?.email, req.user?.name);
+  }
 
   @Get("workspaces")
   workspaces() {
@@ -46,6 +138,16 @@ export class CrmPlatformController {
   @Get("sites")
   sites() {
     return this.platform.listSites();
+  }
+
+  @Get("platform-status")
+  platformStatus() {
+    return this.platform.getPlatformStatus();
+  }
+
+  @Get("platform-metrics")
+  platformMetrics() {
+    return this.metrics.getMetrics();
   }
 
   @Get("sites/:id")
@@ -64,22 +166,39 @@ export class CrmPlatformController {
       apiBaseUrl?: string;
       extraDomains?: string[];
       provision?: boolean;
-    }
+    },
+    @Req() req: { user?: { sub?: string; email?: string; name?: string } }
   ) {
-    return this.platform.createSite(body);
+    return this.platform.createSite(body, auditActor(req));
   }
 
   @Patch("sites/:id")
   patchSite(
     @Param("id") id: string,
-    @Body() body: { repo?: string; apiPort?: number; webPort?: number; apiBaseUrl?: string; extraDomains?: string[] }
+    @Body() body: { repo?: string; apiPort?: number; webPort?: number; apiBaseUrl?: string; extraDomains?: string[] },
+    @Req() req: { user?: { sub?: string; email?: string; name?: string } }
   ) {
-    return this.platform.updateSite(id, body);
+    return this.platform.updateSite(id, body, auditActor(req));
+  }
+
+  @Delete("sites/:id")
+  deleteSite(@Param("id") id: string, @Req() req: { user?: { sub?: string; email?: string } }) {
+    return this.platform.deleteSite(id, auditActor(req));
   }
 
   @Post("sites/:id/provision")
-  provisionSite(@Param("id") id: string) {
-    return this.platform.provisionSite(id);
+  provisionSite(@Param("id") id: string, @Req() req: { user?: { sub?: string; email?: string } }) {
+    return this.platform.provisionSite(id, auditActor(req));
+  }
+
+  @Post("platform-deploy")
+  deployPlatform(@Req() req: { user?: { sub?: string; email?: string; name?: string } }) {
+    return this.deploy.deployPlatform(auditActor(req));
+  }
+
+  @Post("sites/:id/deploy")
+  deploySite(@Param("id") id: string, @Req() req: { user?: { sub?: string; email?: string; name?: string } }) {
+    return this.deploy.deploySite(id, auditActor(req));
   }
 }
 
