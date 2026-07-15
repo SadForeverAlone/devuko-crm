@@ -54,12 +54,13 @@ jobs:
             export VITE_PUBLIC_URL=https://crm.devuko.ru
             echo "==> deploy from ${DEVUKO_CRM_REPO_ROOT}"
             cd "${DEVUKO_CRM_REPO_ROOT}"
-            echo "==> git sync (hard reset to origin/${DEPLOY_BRANCH})"
-            git fetch origin "${DEPLOY_BRANCH}"
-            git reset --hard "origin/${DEPLOY_BRANCH}"
+            if [[ ! -d .git ]]; then
+              echo "ERROR: ${DEVUKO_CRM_REPO_ROOT} is not a git checkout" >&2
+              echo "Clone once: git clone git@github.com:SadForeverAlone/devuko-crm.git ${DEVUKO_CRM_REPO_ROOT}" >&2
+              exit 1
+            fi
             bash "${DEVUKO_CRM_REPO_ROOT}/infra/deploy/deploy.sh"
             echo "==> smoke test API"
             curl -fsS "http://127.0.0.1:8095/health" | grep -q '"ok":true'
             echo "==> smoke test HTTPS"
-            curl -fsS --resolve crm.devuko.ru:443:127.0.0.1 "https://crm.devuko.ru/health" | grep -q '"ok":true' \
-              || curl -fsS "https://crm.devuko.ru/health" | grep -q '"ok":true'
+            curl -kfsS --resolve crm.devuko.ru:443:127.0.0.1 "https://crm.devuko.ru/health" | grep -q '"ok":true'
