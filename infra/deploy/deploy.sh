@@ -29,9 +29,19 @@ COMPOSE_PARALLEL_LIMIT=1 "${COMPOSE[@]}" build api
 COMPOSE_PARALLEL_LIMIT=1 "${COMPOSE[@]}" build web
 
 echo "==> start full stack"
-"${COMPOSE[@]}" up -d --force-recreate
+compose_up() {
+  "${COMPOSE[@]}" up -d --force-recreate --remove-orphans "$@"
+}
 
-  if command -v nginx >/dev/null 2>&1; then
+if ! compose_up; then
+  echo "==> compose up failed; cleaning stale name conflicts and retrying" >&2
+  # Race with a concurrent recreate leaves container IDs compose still expects.
+  docker ps -aq --filter name=devuko-crm-web --filter status=created | xargs -r docker rm -f || true
+  docker ps -aq --filter name='_devuko-crm-web$' --filter status=created | xargs -r docker rm -f || true
+  compose_up
+fi
+
+if command -v nginx >/dev/null 2>&1; then
   echo "==> sync static for host nginx"
   staging=$(mktemp -d)
   web_cid=$(docker ps -qf name=^devuko-crm-web$)
