@@ -38,7 +38,7 @@ jobs:
 
       - name: SSH deploy
         if: steps.deploy_key.outputs.skip != 'true'
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.5
         env:
           DEVUKO_CRM_REPO_ROOT: ${{ secrets.DEVUKO_CRM_REPO_ROOT }}
         with:
