@@ -1,5 +1,6 @@
-import { BadRequestException, Injectable, Logger } from "@nestjs/common";
+import { BadGatewayException, BadRequestException, Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { secureWorkspaceFetch } from "../../common/secure-fetch.util";
 import { PLATFORM_WORKSPACE_ID, PlatformService } from "./platform.service";
 
 @Injectable()
@@ -30,8 +31,7 @@ export class WorkspaceProxyService {
       throw new BadRequestException("Unknown workspace");
     }
 
-    const base = site.apiBaseUrl.replace(/\/$/, "");
-    const url = `${base}${path}${init.query ? `?${init.query}` : ""}`;
+    const pathWithQuery = `${path}${init.query ? `?${init.query}` : ""}`;
     const headers: Record<string, string> = {
       Accept: "application/json",
       "X-Devuko-Proxy-Token": this.proxySecret(),
@@ -43,15 +43,22 @@ export class WorkspaceProxyService {
       headers["Content-Type"] = "application/json";
     }
 
-    const res = await fetch(url, {
-      method: init.method,
-      headers,
-      body: init.body,
-    });
+    const res = await secureWorkspaceFetch(
+      site.apiBaseUrl,
+      pathWithQuery,
+      { domain: site.domain, extraDomains: site.extraDomains },
+      {
+        method: init.method,
+        headers,
+        body: init.body,
+      }
+    );
 
     if (!res.ok) {
       const text = await res.text();
-      this.logger.warn(`Proxy ${init.method} ${url} -> ${res.status}: ${text.slice(0, 200)}`);
+      this.logger.warn(
+        `Proxy ${init.method} ${site.apiBaseUrl}${pathWithQuery} -> ${res.status}: ${text.slice(0, 200)}`
+      );
       throw new BadRequestException(`Workspace API error (${res.status})`);
     }
 
@@ -59,6 +66,13 @@ export class WorkspaceProxyService {
       return undefined as T;
     }
     const text = await res.text();
-    return text ? (JSON.parse(text) as T) : (undefined as T);
+    if (!text) {
+      return undefined as T;
+    }
+    try {
+      return JSON.parse(text) as T;
+    } catch {
+      throw new BadGatewayException("Workspace API returned invalid JSON");
+    }
   }
 }

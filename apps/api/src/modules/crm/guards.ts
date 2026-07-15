@@ -1,5 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
+import { CRM_ADMIN_ROLE } from "../../common/auth.constants";
+import { CrmSessionService } from "./crm-session.service";
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard("jwt") {
@@ -12,10 +14,24 @@ export class JwtAuthGuard extends AuthGuard("jwt") {
 }
 
 @Injectable()
+export class SessionActiveGuard implements CanActivate {
+  constructor(private readonly sessions: CrmSessionService) {}
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const req = context.switchToHttp().getRequest<{ user?: { sid?: string } }>();
+    const sid = req.user?.sid;
+    if (!sid || !(await this.sessions.isSessionActive(sid))) {
+      throw new UnauthorizedException();
+    }
+    return true;
+  }
+}
+
+@Injectable()
 export class AdminGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
-    const req = context.switchToHttp().getRequest<{ user?: { sub?: string } }>();
-    if (!req.user?.sub) {
+    const req = context.switchToHttp().getRequest<{ user?: { sub?: string; role?: string } }>();
+    if (!req.user?.sub || req.user.role !== CRM_ADMIN_ROLE) {
       throw new UnauthorizedException();
     }
     return true;

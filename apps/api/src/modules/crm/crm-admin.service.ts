@@ -1,8 +1,9 @@
 import { BadRequestException, Injectable, NotFoundException, OnModuleInit } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { JwtService } from "@nestjs/jwt";
+import { DatabaseSchemaService } from "../database/database-schema.service";
 import { DatabaseService } from "../database/database.service";
 import { PlatformAuditService } from "./platform-audit.service";
+import { CrmSessionService } from "./crm-session.service";
 import { hashPassword, shouldRehash, verifyPassword } from "./password-hash";
 
 type AuditActor = { id?: string; email?: string; name?: string };
@@ -17,8 +18,9 @@ function fullName(firstName: string, lastName: string) {
 export class CrmAdminService implements OnModuleInit {
   constructor(
     private readonly db: DatabaseService,
+    private readonly schema: DatabaseSchemaService,
     private readonly config: ConfigService,
-    private readonly jwt: JwtService,
+    private readonly sessions: CrmSessionService,
     private readonly audit: PlatformAuditService
   ) {}
 
@@ -82,22 +84,17 @@ export class CrmAdminService implements OnModuleInit {
   }
 
   async onModuleInit() {
-    await this.db.execute(`
-      CREATE TABLE IF NOT EXISTS "CrmAdmin" (
-        "id" TEXT PRIMARY KEY,
-        "email" TEXT UNIQUE NOT NULL,
-        "passwordHash" TEXT NOT NULL,
-        "displayName" TEXT NOT NULL,
-        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
+    await this.schema.ensureSchema();
     await this.ensureAdminColumns();
     const email = this.config.get<string>("CRM_ADMIN_EMAIL")?.trim().toLowerCase();
     const password = this.config.get<string>("CRM_ADMIN_PASSWORD")?.trim();
     if (!email || !password) return;
-    const { rows } = await this.db.query(`SELECT "id" FROM "CrmAdmin" WHERE lower("email") = $1 LIMIT 1`, [email]);
-    if (rows[0]) return;
     const login = email.split("@")[0] ?? "admin";
+    const { rows } = await this.db.query(
+      `SELECT "id" FROM "CrmAdmin" WHERE lower("email") = $1 OR lower("login") = $2 LIMIT 1`,
+      [email, login]
+    );
+    if (rows[0]) return;
     await this.db.execute(
       `INSERT INTO "CrmAdmin" ("id", "login", "email", "passwordHash", "firstName", "lastName", "displayName")
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
@@ -105,7 +102,7 @@ export class CrmAdminService implements OnModuleInit {
     );
   }
 
-  async login(login: string, password: string) {
+  async verifyCredentials(login: string, password: string) {
     const identifier = login.trim().toLowerCase();
     const { rows } = await this.db.query(
       `SELECT "id", "login", "email", "passwordHash", "firstName", "lastName", "displayName"
@@ -122,7 +119,7 @@ export class CrmAdminService implements OnModuleInit {
         target: identifier || null,
         ok: false,
       });
-      return { ok: false as const };
+      return null;
     }
     if (shouldRehash(String(admin.passwordHash))) {
       await this.db.execute(`UPDATE "CrmAdmin" SET "passwordHash" = $1 WHERE "id" = $2`, [
@@ -130,11 +127,22 @@ export class CrmAdminService implements OnModuleInit {
         String(admin.id),
       ]);
     }
+    return admin;
+  }
+
+  async login(login: string, password: string) {
+    const admin = await this.verifyCredentials(login, password);
+    if (!admin) {
+      return { ok: false as const };
+    }
     const actorName = fullName(String(admin.firstName ?? ""), String(admin.lastName ?? "")) || String(admin.displayName);
-    const token = this.jwt.sign(
-      { sub: String(admin.id), email: String(admin.email), name: actorName },
-      { expiresIn: 8 * 3600 }
-    );
+    const token = await this.sessions.issueForAdmin({
+      id: String(admin.id),
+      email: String(admin.email),
+      firstName: String(admin.firstName ?? ""),
+      lastName: String(admin.lastName ?? ""),
+      displayName: String(admin.displayName ?? ""),
+    });
     await this.audit.log({
       actorAdminId: String(admin.id),
       actorEmail: String(admin.email),
@@ -317,6 +325,7 @@ export class CrmAdminService implements OnModuleInit {
          WHERE "id" = $7`,
         [login, email, firstName, lastName, displayName, hashPassword(password), id]
       );
+      await this.sessions.revokeAllForAdmin(id);
     } else {
       await this.db.execute(
         `UPDATE "CrmAdmin"

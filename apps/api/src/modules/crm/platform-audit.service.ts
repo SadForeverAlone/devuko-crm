@@ -1,5 +1,6 @@
-import { Injectable, OnModuleInit } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { createHash, randomBytes } from "crypto";
+import { DatabaseSchemaService } from "../database/database-schema.service";
 import { DatabaseService } from "../database/database.service";
 
 export type PlatformAuditRow = {
@@ -14,39 +15,14 @@ export type PlatformAuditRow = {
 };
 
 @Injectable()
-export class PlatformAuditService implements OnModuleInit {
-  private ready = false;
-
-  constructor(private readonly db: DatabaseService) {}
+export class PlatformAuditService {
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly schema: DatabaseSchemaService
+  ) {}
 
   private id() {
     return `plog_${createHash("sha256").update(randomBytes(12)).digest("hex").slice(0, 16)}`;
-  }
-
-  async onModuleInit() {
-    await this.ensureTable();
-  }
-
-  async ensureTable() {
-    if (this.ready) return;
-    await this.db.execute(`
-      CREATE TABLE IF NOT EXISTS "CrmPlatformAudit" (
-        "id" TEXT PRIMARY KEY,
-        "actorAdminId" TEXT NULL,
-        "actorEmail" TEXT NULL,
-        "action" TEXT NOT NULL,
-        "target" TEXT NULL,
-        "detail" TEXT NULL,
-        "ok" BOOLEAN NOT NULL DEFAULT TRUE,
-        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    await this.db.execute(`ALTER TABLE "CrmPlatformAudit" ADD COLUMN IF NOT EXISTS "actorName" TEXT NULL`);
-    await this.db.execute(`
-      CREATE INDEX IF NOT EXISTS "CrmPlatformAudit_createdAt_idx"
-      ON "CrmPlatformAudit" ("createdAt" DESC)
-    `);
-    this.ready = true;
   }
 
   async log(input: {
@@ -58,7 +34,7 @@ export class PlatformAuditService implements OnModuleInit {
     detail?: string | null;
     ok?: boolean;
   }) {
-    await this.ensureTable();
+    await this.schema.ensureSchema();
     await this.db.execute(
       `INSERT INTO "CrmPlatformAudit" ("id", "actorAdminId", "actorEmail", "actorName", "action", "target", "detail", "ok")
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
@@ -76,7 +52,7 @@ export class PlatformAuditService implements OnModuleInit {
   }
 
   async list(input?: { limit?: number; offset?: number }) {
-    await this.ensureTable();
+    await this.schema.ensureSchema();
     const limit = Math.min(Math.max(input?.limit ?? 200, 1), 500);
     const offset = Math.max(input?.offset ?? 0, 0);
     const { rows } = await this.db.query(
@@ -106,7 +82,7 @@ export class PlatformAuditService implements OnModuleInit {
   }
 
   async lastActivityAt() {
-    await this.ensureTable();
+    await this.schema.ensureSchema();
     const { rows } = await this.db.query(
       `SELECT "createdAt" FROM "CrmPlatformAudit" ORDER BY "createdAt" DESC LIMIT 1`
     );

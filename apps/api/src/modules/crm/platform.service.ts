@@ -11,6 +11,10 @@ import { createHash, randomBytes } from "crypto";
 import { existsSync } from "fs";
 import { join } from "path";
 import { promisify } from "util";
+import { pickChildEnv } from "../../common/child-env.util";
+import { assertDeployPath } from "../../common/deploy-path.util";
+import { assertWorkspaceApiUrl } from "../../common/workspace-url.util";
+import { DatabaseSchemaService } from "../database/database-schema.service";
 import { DatabaseService } from "../database/database.service";
 import { readDiskUsage } from "./disk-usage";
 import { PlatformAuditService } from "./platform-audit.service";
@@ -66,6 +70,7 @@ export class PlatformService implements OnModuleInit {
 
   constructor(
     private readonly db: DatabaseService,
+    private readonly schema: DatabaseSchemaService,
     private readonly audit: PlatformAuditService
   ) {}
 
@@ -80,7 +85,8 @@ export class PlatformService implements OnModuleInit {
   }
 
   private siteProdPath(site: { domain: string; prodPath?: string | null }) {
-    return site.prodPath?.trim() || `/srv/sites/${site.domain}`;
+    const raw = site.prodPath?.trim() || `/srv/sites/${site.domain}`;
+    return assertDeployPath(raw, site);
   }
 
   private isSiteDeployed(site: { domain: string; prodPath?: string | null }) {
@@ -128,37 +134,7 @@ export class PlatformService implements OnModuleInit {
 
   async ensurePlatformTables() {
     if (this.ready) return;
-    await this.db.execute(`CREATE EXTENSION IF NOT EXISTS pgcrypto`);
-    await this.db.execute(`
-      CREATE TABLE IF NOT EXISTS "CrmWorkspace" (
-        "id" TEXT PRIMARY KEY,
-        "slug" TEXT UNIQUE NOT NULL,
-        "label" TEXT NOT NULL,
-        "kind" TEXT NOT NULL,
-        "siteId" TEXT NULL UNIQUE,
-        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    await this.db.execute(`
-      CREATE TABLE IF NOT EXISTS "CrmSite" (
-        "id" TEXT PRIMARY KEY,
-        "domain" TEXT UNIQUE NOT NULL,
-        "slug" TEXT UNIQUE NOT NULL,
-        "repo" TEXT NULL,
-        "status" TEXT NOT NULL DEFAULT 'pending',
-        "prodPath" TEXT NULL,
-        "apiBaseUrl" TEXT NOT NULL,
-        "apiPort" INTEGER NULL,
-        "webPort" INTEGER NULL,
-        "extraDomains" JSONB NULL,
-        "devConfig" JSONB NULL,
-        "provisionLog" JSONB NULL,
-        "workspaceId" TEXT UNIQUE NOT NULL,
-        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    await this.db.execute(`ALTER TABLE "CrmSite" ADD COLUMN IF NOT EXISTS "apiBaseUrl" TEXT`);
+    await this.schema.ensureSchema();
     await this.db.execute(`
       INSERT INTO "CrmWorkspace" ("id", "slug", "label", "kind", "siteId")
       VALUES ($1, 'platform', 'Devuko', 'platform', NULL)
@@ -259,7 +235,10 @@ export class PlatformService implements OnModuleInit {
 
     const siteId = this.id("site");
     const workspaceId = this.id("ws");
-    const apiBaseUrl = (input.apiBaseUrl?.trim() || this.defaultApiBaseUrl(domain)).replace(/\/$/, "");
+    const apiBaseUrl = assertWorkspaceApiUrl(
+      input.apiBaseUrl?.trim() || this.defaultApiBaseUrl(domain),
+      { domain, extraDomains: input.extraDomains ?? [] }
+    );
 
     await this.db.execute(
       `INSERT INTO "CrmWorkspace" ("id", "slug", "label", "kind", "siteId") VALUES ($1, $2, $3, 'site', $4)`,
@@ -324,8 +303,13 @@ export class PlatformService implements OnModuleInit {
       params.push(input.webPort);
     }
     if (input.apiBaseUrl !== undefined) {
+      const site = await this.getSite(siteId);
+      const validated = assertWorkspaceApiUrl(input.apiBaseUrl, {
+        domain: site.domain,
+        extraDomains: input.extraDomains ?? site.extraDomains,
+      });
       sets.push(`"apiBaseUrl" = $${idx++}`);
-      params.push(input.apiBaseUrl.replace(/\/$/, ""));
+      params.push(validated);
     }
     if (input.extraDomains !== undefined) {
       sets.push(`"extraDomains" = $${idx++}::jsonb`);
@@ -374,14 +358,13 @@ export class PlatformService implements OnModuleInit {
     if (existsSync(script)) {
       try {
         const { stdout, stderr } = await execFileAsync("bash", [script, site.domain, "--registry-only"], {
-          env: {
-            ...process.env,
+          env: pickChildEnv({
             SITE_REPO: site.repo ?? "",
             SITE_API_PORT: String(site.apiPort ?? 8080),
             SITE_WEB_PORT: String(site.webPort ?? 8088),
             SITE_EXTRA_DOMAINS: site.extraDomains.join(","),
             PLATFORM_REGISTRY: this.registryPath(),
-          },
+          }),
           timeout: 120_000,
         });
         const output = (stdout || stderr || "ok").trim();

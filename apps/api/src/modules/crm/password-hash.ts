@@ -21,7 +21,14 @@ export function verifyPassword(password: string, stored: string) {
     }
   }
   const legacy = createHash("sha256").update(password).digest("hex");
-  return legacy === stored;
+  try {
+    const a = Buffer.from(stored, "hex");
+    const b = Buffer.from(legacy, "hex");
+    if (a.length !== b.length) return false;
+    return timingSafeEqual(a, b);
+  } catch {
+    return false;
+  }
 }
 
 export function shouldRehash(stored: string) {

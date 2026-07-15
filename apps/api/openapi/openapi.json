@@ -1,0 +1,29 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Devuko CRM API",
+    "description": "Platform CRM API and workspace proxy. Refresh from a running API: curl -fsS http://127.0.0.1:8095/docs-json -o apps/api/openapi/openapi.json",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["health"],
+        "summary": "Readiness (DB ping)",
+        "responses": {
+          "200": { "description": "DB up" },
+          "503": { "description": "DB down" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "devuko_crm_session"
+      }
+    }
+  }
+}
