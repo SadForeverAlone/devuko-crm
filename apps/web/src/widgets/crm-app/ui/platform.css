@@ -1774,11 +1774,6 @@
   color: #9ca3af;
   line-height: 1.4;
 }
-  display: inline-grid;
-  place-items: center;
-  border-radius: 50%;
-  background: #8b5cf6;
-  color: #fff;
 
 @media (max-width: 1360px) {
   .crm-platform-metrics__grid {

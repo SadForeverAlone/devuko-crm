@@ -150,15 +150,19 @@ export function DashboardSection({
                     aria-hidden
                   >
                     {genderMetrics.map((item, index) => {
-                      const h = Math.max(12, item.percent);
+                      const h = Math.max(8, Math.min(100, item.percent));
+                      const columns = Math.max(1, genderMetrics.length);
+                      const slot = 100 / columns;
+                      const gap = columns > 1 ? 4 : 0;
                       return (
                         <rect
                           key={item.label}
-                          className={`crm-segmentation-card__segment crm-segmentation-card__segment--${index + 1}`}
-                          x={index * (100 / Math.max(1, genderMetrics.length))}
+                          className={`crm-segmentation-card__segment crm-segmentation-card__segment--${(index % 5) + 1}`}
+                          x={index * slot + gap / 2}
                           y={100 - h}
-                          width={100 / Math.max(1, genderMetrics.length) - 4}
+                          width={Math.max(8, slot - gap)}
                           height={h}
+                          rx={columns === 1 ? 8 : 4}
                         />
                       );
                     })}

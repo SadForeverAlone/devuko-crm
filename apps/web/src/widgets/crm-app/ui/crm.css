@@ -3309,11 +3309,15 @@ html:has(.crm-root) #root {
   display: flex;
   justify-content: center;
   align-items: stretch;
+  min-height: 132px;
 }
 .crm-segmentation-card__stack {
   width: 92px;
+  min-height: 132px;
+  height: 100%;
   border-radius: 14px;
-  background: #3a3a3d;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -3322,22 +3326,26 @@ html:has(.crm-root) #root {
 .crm-segmentation-card__stack-svg {
   width: 100%;
   height: 100%;
+  min-height: 132px;
   display: block;
 }
 .crm-segmentation-card__segment {
   width: 100%;
 }
 .crm-segmentation-card__segment--1 {
-  fill: #545456;
-  background: #545456;
+  fill: #6d73ff;
 }
 .crm-segmentation-card__segment--2 {
-  fill: #8f96cc;
-  background: #8f96cc;
+  fill: #a78bfa;
 }
 .crm-segmentation-card__segment--3 {
-  fill: #3847d7;
-  background: #3847d7;
+  fill: #38bdf8;
+}
+.crm-segmentation-card__segment--4 {
+  fill: #34d399;
+}
+.crm-segmentation-card__segment--5 {
+  fill: #fbbf24;
 }
 .crm-settings-list {
   display: grid;
