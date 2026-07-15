@@ -132,6 +132,8 @@ print('OK')
 
     const { subject, text, html } = buildLoginCodeEmail(code);
     const sender = this.pickSender(email);
+    // Mail.ru historically 550-rejects styled HTML OTP mail; text-only delivers better.
+    const mailRu = isMailRuFamily(email);
 
     const result = await sender.transporter.sendMail({
       from: sender.from,
@@ -139,7 +141,7 @@ print('OK')
       replyTo: this.senders.get("support")?.from ?? sender.from,
       subject,
       text,
-      html,
+      ...(mailRu ? {} : { html }),
       headers: {
         "Auto-Submitted": "auto-generated",
         "X-Auto-Response-Suppress": "All",
@@ -150,7 +152,7 @@ print('OK')
       },
     });
 
-    await this.sleep(8_000);
+    await this.sleep(mailRu ? 12_000 : 8_000);
     const bounced = await this.hasRecentBounce(sender.bounceMailbox, email);
     if (bounced) {
       this.logger.error(`Login code bounce for ${email} via ${sender.bounceMailbox}`);

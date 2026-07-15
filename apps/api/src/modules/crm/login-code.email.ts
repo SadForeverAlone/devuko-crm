@@ -9,12 +9,12 @@ function escapeHtml(value: string) {
 
 export function buildLoginCodeEmail(code: string) {
   const safeCode = escapeHtml(code);
+  // Plain subject — marketing-styled HTML gets Mail.ru spam-rejected.
   const subject = "Код входа в Devuko CRM";
 
   const text = [
-    "Devuko CRM",
-    "",
-    `Ваш код для входа: ${code}`,
+    "Код для входа в Devuko CRM:",
+    code,
     "",
     "Код действует 10 минут.",
     "Если вы не запрашивали вход, проигнорируйте это письмо.",
@@ -23,18 +23,10 @@ export function buildLoginCodeEmail(code: string) {
   const html = `<!DOCTYPE html>
 <html lang="ru">
 <head><meta charset="utf-8" /></head>
-<body style="margin:0;padding:24px;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:480px;margin:0 auto;background:#fff;border:1px solid #e4e4e7;border-radius:14px;">
-    <tr><td style="height:4px;background:#8b5cf6;"></td></tr>
-    <tr>
-      <td style="padding:28px 24px;">
-        <p style="margin:0 0 8px;font-size:12px;color:#7c3aed;font-weight:700;letter-spacing:.08em;text-transform:uppercase;">Devuko CRM</p>
-        <h1 style="margin:0 0 12px;font-size:22px;color:#18181b;">Код для входа</h1>
-        <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#52525b;">Введите код на экране авторизации. Он действует 10 минут.</p>
-        <p style="margin:0;font-size:32px;font-weight:700;letter-spacing:.24em;color:#4c1d95;font-family:Consolas,Monaco,monospace;">${safeCode}</p>
-      </td>
-    </tr>
-  </table>
+<body style="margin:0;padding:16px;font-family:Arial,Helvetica,sans-serif;color:#111;font-size:15px;line-height:1.5;">
+  <p style="margin:0 0 12px;">Код для входа в Devuko CRM:</p>
+  <p style="margin:0 0 16px;font-size:28px;font-weight:700;font-family:Consolas,Monaco,monospace;letter-spacing:0.12em;">${safeCode}</p>
+  <p style="margin:0;color:#444;">Код действует 10 минут. Если вы не запрашивали вход, проигнорируйте это письмо.</p>
 </body>
 </html>`;
 
