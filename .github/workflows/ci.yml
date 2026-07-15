@@ -172,14 +172,14 @@ jobs:
       - name: Install web dependencies
         working-directory: apps/web
         run: npm ci
-      - name: Build web
-        working-directory: apps/web
-        run: npm run build
       - name: Install Playwright Chromium
         working-directory: apps/web
         run: npx playwright install --with-deps chromium
       - name: Auth e2e
         working-directory: apps/web
+        env:
+          # auth.spec uses API request only — skip Vite preview webServer
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:8095
         run: npx playwright test e2e/auth.spec.ts
       - name: Stop API
         if: always()
