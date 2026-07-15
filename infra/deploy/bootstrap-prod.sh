@@ -36,17 +36,17 @@ POSTGRES_DB=devuko_crm
 DATABASE_URL=postgresql://devuko:${PG_PASS}@postgres:5432/devuko_crm
 JWT_SECRET=${JWT_SECRET}
 DEVUKO_PROXY_SECRET=${PROXY_SECRET}
-  CRM_ADMIN_EMAIL=admin@devuko.ru
-  CRM_ADMIN_PASSWORD=
+CRM_ADMIN_EMAIL=admin@devuko.ru
+CRM_ADMIN_PASSWORD=
 PLATFORM_REPO_ROOT=${DEST}
 SELFPACT_WORKSPACE_DOMAIN=selfpact.ru
 SELFPACT_WORKSPACE_API_BASE=https://selfpact.ru
 SELFPACT_REPO_URL=git@github.com:SadForeverAlone/selfpact.git
 EOF
   chown sherli:selfpact "$ENV_FILE"
-  chmod 640 "$ENV_FILE"
+  chmod 600 "$ENV_FILE"
   echo "CRM admin: create with  bash platform/bin/crm-add-admin.sh admin@devuko.ru YOUR_PASSWORD"
-  echo "DEVUKO_PROXY_SECRET=${PROXY_SECRET}"
+  echo "DEVUKO_PROXY_SECRET written to $ENV_FILE (not echoed)"
   echo "Add the same DEVUKO_PROXY_SECRET to /srv/sites/selfpact.ru/repo/apps/backend/.env"
 fi
 

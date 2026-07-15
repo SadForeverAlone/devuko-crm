@@ -1,0 +1,11 @@
+# Optional overlay — mounts Docker socket for UI-triggered deploy and container metrics.
+# High risk: equivalent to host root if the API is compromised.
+# Prefer GitHub Actions / `make deploy` without this overlay.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.deploy.yml up -d
+
+services:
+  api:
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock

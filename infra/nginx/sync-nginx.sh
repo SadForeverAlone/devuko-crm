@@ -16,7 +16,12 @@ if ! command -v nginx >/dev/null 2>&1; then
 fi
 
 echo "==> sites-available"
-for f in devuko-crm-locations.inc devuko-crm-production-http.conf devuko-crm-production-https.conf; do
+for f in \
+  devuko-crm-security-headers.inc \
+  devuko-crm-locations.inc \
+  devuko-crm-production-http.conf \
+  devuko-crm-production-https.conf
+do
   cp "$NGINX_DIR/$f" "/etc/nginx/sites-available/$f"
 done
 

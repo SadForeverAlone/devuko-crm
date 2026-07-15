@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Production deploy: git sync, docker build/up, static copy for host nginx.
+# Local dev web build: use `make web-build` so apps/web/dist is owned by your user (docker cp may leave root-owned files).
 set -euo pipefail
 ROOT="${DEVUKO_CRM_REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 ENV_FILE="$ROOT/apps/api/.env"
@@ -6,6 +8,7 @@ if [[ ! -f "$ENV_FILE" ]]; then
   echo "Missing $ENV_FILE (see apps/api/.env.example)" >&2
   exit 1
 fi
+chmod 600 "$ENV_FILE" 2>/dev/null || true
 COMPOSE=(docker compose --env-file "$ENV_FILE" -p devuko-crm -f "$ROOT/docker/docker-compose.yml")
 cd "$ROOT"
 export VITE_PUBLIC_URL="${VITE_PUBLIC_URL:-https://crm.devuko.ru}"
@@ -26,7 +29,7 @@ COMPOSE_PARALLEL_LIMIT=1 "${COMPOSE[@]}" build api
 COMPOSE_PARALLEL_LIMIT=1 "${COMPOSE[@]}" build web
 
 echo "==> start full stack"
-"${COMPOSE[@]}" up -d
+"${COMPOSE[@]}" up -d --force-recreate
 
   if command -v nginx >/dev/null 2>&1; then
   echo "==> sync static for host nginx"
@@ -45,15 +48,27 @@ echo "==> start full stack"
   rm -rf "$staging"
 
   if [[ "$(id -u)" -eq 0 ]] || nginx -t 2>/dev/null; then
-    if [[ -x "$ROOT/infra/nginx/sync-nginx.sh" ]] && [[ "$(id -u)" -eq 0 ]]; then
-      echo "==> sync nginx config"
-      bash "$ROOT/infra/nginx/sync-nginx.sh"
+    if [[ -x "$ROOT/infra/nginx/sync-nginx.sh" ]]; then
+      if [[ "$(id -u)" -eq 0 ]]; then
+        echo "==> sync nginx config"
+        bash "$ROOT/infra/nginx/sync-nginx.sh"
+      elif sudo -n bash "$ROOT/infra/nginx/sync-nginx.sh" 2>/dev/null; then
+        echo "==> sync nginx config (passwordless sudo)"
+      elif [[ -x /home/sherli/web/selfpact.ru/infra/nginx/sync-nginx.sh ]] \
+        && sudo -n /home/sherli/web/selfpact.ru/infra/nginx/sync-nginx.sh 2>/dev/null; then
+        echo "==> sync nginx config (NOPASSWD wrapper)"
+      else
+        echo "==> nginx config drift: run sudo bash $ROOT/infra/nginx/sync-nginx.sh"
+        echo "    or: sudo /home/sherli/web/selfpact.ru/infra/nginx/sync-nginx.sh"
+      fi
     fi
     if [[ "$(id -u)" -eq 0 ]]; then
       echo "==> nginx reload"
       nginx -t && systemctl reload nginx
+    elif sudo -n nginx -t 2>/dev/null && sudo -n systemctl reload nginx 2>/dev/null; then
+      echo "==> nginx reload (passwordless sudo)"
     else
-      echo "==> nginx reload skipped (run as root to reload host nginx)"
+      echo "==> nginx reload skipped (run as root or configure passwordless sudo for sync-nginx.sh)"
     fi
   fi
 fi

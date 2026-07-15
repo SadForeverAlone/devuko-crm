@@ -1,0 +1,6 @@
+# Optional overlay for auth e2e against a running stack.
+# Usage: make test-e2e-auth (temporarily recreates API with OTP echo, then restores).
+services:
+  api:
+    environment:
+      AUTH_OTP_ECHO: "true"
