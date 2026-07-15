@@ -3,9 +3,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBars,
   faChevronDown,
+  faFolder,
   faGlobe,
   faRightFromBracket,
-  faRocket,
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { useEffect, useState } from "react";
@@ -115,10 +115,17 @@ export function CrmAuthenticatedLayout() {
               onClick={() => setWorkspaceMenuOpen((open) => !open)}
             >
               <span className="crm-sidebar__workspace-icon">
-                <FontAwesomeIcon icon={isPlatformActive ? faGlobe : faRocket} />
+                <FontAwesomeIcon icon={isPlatformActive ? faGlobe : faFolder} />
               </span>
               <span className="crm-sidebar__workspace-label">{workspaceLabel}</span>
-              <FontAwesomeIcon icon={faChevronDown} className="crm-sidebar__workspace-caret" />
+              <FontAwesomeIcon
+                icon={faChevronDown}
+                className={
+                  workspaceMenuOpen
+                    ? "crm-sidebar__workspace-caret crm-sidebar__workspace-caret--open"
+                    : "crm-sidebar__workspace-caret"
+                }
+              />
             </button>
             {workspaceMenuOpen ? (
               <div className="crm-workspace-menu" role="listbox" aria-label={ui.workspaceSwitch}>
@@ -141,7 +148,7 @@ export function CrmAuthenticatedLayout() {
                     </span>
                     <span className="crm-workspace-menu__text">
                       <span className="crm-workspace-menu__title">{ui.platformWorkspaceLabel}</span>
-                      <span className="crm-workspace-menu__subtitle">Platform</span>
+                      <span className="crm-workspace-menu__subtitle">{ui.workspaceMenuPlatform}</span>
                     </span>
                     <span className="crm-workspace-menu__badge">OS</span>
                   </button>
@@ -163,7 +170,7 @@ export function CrmAuthenticatedLayout() {
                     onClick={() => handleSwitchWorkspace(item.id)}
                   >
                     <span className="crm-workspace-menu__icon crm-workspace-menu__icon--site">
-                      <FontAwesomeIcon icon={faRocket} />
+                      <FontAwesomeIcon icon={faFolder} />
                     </span>
                     <span className="crm-workspace-menu__text">
                       <span className="crm-workspace-menu__title">{item.label}</span>

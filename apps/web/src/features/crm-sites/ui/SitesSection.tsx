@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronDown, faGlobe, faPen, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
+import {
+  faChevronDown,
+  faEllipsis,
+  faFolderTree,
+  faPen,
+  faPlus,
+  faRightToBracket,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
 import type { CrmSite } from "@/entities/crm";
 import { crmCopy } from "@/widgets/crm-app/model/i18n";
 import type { CrmLang } from "@/widgets/crm-app/model/types";
@@ -105,8 +113,12 @@ export function SitesSection({
       title={listTitle ?? ui.sitesTitle}
       subtitle={listSubtitle ?? ui.sitesSubtitle}
       actions={
-        <button type="button" className="crm-btn crm-btn--primary" onClick={() => setShowCreate((v) => !v)}>
-          <FontAwesomeIcon icon={faPlus} />
+        <button
+          type="button"
+          className={showCreate ? "crm-btn crm-btn--ghost" : "crm-btn crm-btn--primary"}
+          onClick={() => setShowCreate((v) => !v)}
+        >
+          {showCreate ? null : <FontAwesomeIcon icon={faPlus} />}
           {showCreate ? ui.sitesCancelCreate : ui.sitesCreateTitle}
         </button>
       }
@@ -185,7 +197,7 @@ export function SitesSection({
       {sortedSites.length === 0 ? (
         <article className="crm-panel crm-sites-empty-state crm-sites-empty-state--page">
           <div className="crm-sites-empty-state__icon">
-            <FontAwesomeIcon icon={faGlobe} />
+            <FontAwesomeIcon icon={faFolderTree} />
           </div>
           <p>{ui.sitesEmpty}</p>
           <button type="button" className="crm-btn crm-btn--primary" onClick={() => setShowCreate(true)}>
@@ -198,7 +210,7 @@ export function SitesSection({
           {sortedSites.map((site) => (
             <article key={site.id} className="crm-site-row crm-site-row--page">
               <span className="crm-site-row__icon" aria-hidden>
-                <FontAwesomeIcon icon={faGlobe} />
+                <FontAwesomeIcon icon={faFolderTree} />
               </span>
               <div className="crm-site-row__main">
                 <div className="crm-site-row__title-line">
@@ -282,26 +294,33 @@ export function SitesSection({
                 )}
               </div>
               <div className="crm-site-row__actions">
-                {onOpenProject ? (
-                  <button
-                    type="button"
-                    className="crm-btn crm-btn--ghost crm-btn--sm"
-                    onClick={() => onOpenProject(site.id)}
-                  >
-                    {crmLang === "ru" ? "Детали" : "Details"}
-                  </button>
-                ) : null}
                 <button
                   type="button"
                   className="crm-btn crm-btn--primary crm-btn--sm"
                   disabled={site.status !== "active"}
                   onClick={() => onSwitchToSiteWorkspace(site.workspaceId)}
                 >
+                  <FontAwesomeIcon icon={faRightToBracket} />
                   {ui.sitesOpenWorkspace}
                 </button>
-                <button type="button" className="crm-btn crm-btn--ghost crm-btn--sm" onClick={() => startEdit(site)}>
+                {onOpenProject ? (
+                  <button
+                    type="button"
+                    className="crm-btn crm-btn--ghost crm-btn--sm"
+                    onClick={() => onOpenProject(site.id)}
+                  >
+                    <FontAwesomeIcon icon={faEllipsis} />
+                    {crmLang === "ru" ? "Детали" : "Details"}
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className="crm-btn crm-btn--ghost crm-btn--sm"
+                  aria-label={ui.sitesEdit}
+                  title={ui.sitesEdit}
+                  onClick={() => startEdit(site)}
+                >
                   <FontAwesomeIcon icon={faPen} />
-                  {ui.sitesEdit}
                 </button>
                 <button
                   type="button"
@@ -313,10 +332,11 @@ export function SitesSection({
                 <button
                   type="button"
                   className="crm-btn crm-btn--ghost crm-btn--sm crm-btn--danger"
+                  aria-label={ui.sitesDelete}
+                  title={ui.sitesDelete}
                   onClick={() => handleDelete(site)}
                 >
                   <FontAwesomeIcon icon={faTrash} />
-                  {ui.sitesDelete}
                 </button>
               </div>
               {site.provisionLog.length > 0 ? (

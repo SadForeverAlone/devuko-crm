@@ -848,6 +848,10 @@ html:has(.crm-root) #root {
 .crm-sidebar__workspace-caret {
   opacity: 0.6;
   font-size: 12px;
+  transition: transform 160ms ease;
+}
+.crm-sidebar__workspace-caret--open {
+  transform: rotate(180deg);
 }
 .crm-workspace-picker {
   position: relative;
@@ -2776,6 +2780,10 @@ html:has(.crm-root) #root {
 .crm-btn--primary {
   background: linear-gradient(135deg, #7c3aed, #8b5cf6);
   color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 .crm-btn--ghost {
   background: #202020;

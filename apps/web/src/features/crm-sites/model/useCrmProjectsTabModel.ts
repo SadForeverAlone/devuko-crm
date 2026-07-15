@@ -87,9 +87,7 @@ export function useCrmProjectsTabModel({
     onNavigateProjectTab: (nextTab: ProjectDetailTab) =>
       navigate(`/crm/projects/${projectId}/${nextTab}`),
     onSwitchToSiteWorkspace: (workspaceId: string) => {
-      const site = siteOps.sites.find((item) => item.workspaceId === workspaceId);
-      if (site) navigate(`/crm/projects/${site.id}`);
-      else handleSwitchWorkspace(workspaceId);
+      handleSwitchWorkspace(workspaceId);
     },
     siteOps,
   };

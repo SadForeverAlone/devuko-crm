@@ -3,7 +3,7 @@ import {
   faArrowRight,
   faBox,
   faClock,
-  faGlobe,
+  faFolderTree,
   faPlus,
   faRocket,
 } from "@fortawesome/free-solid-svg-icons";
@@ -164,7 +164,7 @@ export function PlatformDashboardV2Section({
         {sites.length === 0 ? (
           <div className="crm-sites-empty-state">
             <div className="crm-sites-empty-state__icon">
-              <FontAwesomeIcon icon={faGlobe} />
+              <FontAwesomeIcon icon={faFolderTree} />
             </div>
             <p>{ui.sitesEmpty}</p>
             <button type="button" className="crm-btn crm-btn--primary crm-btn--sm" onClick={onOpenProjects}>
@@ -177,7 +177,7 @@ export function PlatformDashboardV2Section({
             {sites.slice(0, 6).map((site) => (
               <article key={site.id} className="crm-site-row crm-site-row--page">
                 <span className="crm-site-row__icon" aria-hidden>
-                  <FontAwesomeIcon icon={faGlobe} />
+                  <FontAwesomeIcon icon={faFolderTree} />
                 </span>
                 <div className="crm-site-row__main">
                   <div className="crm-site-row__title-line">
