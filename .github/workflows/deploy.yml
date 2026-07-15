@@ -15,12 +15,15 @@ jobs:
       - name: Prepare deploy SSH key
         env:
           DEPLOY_KEY: ${{ secrets.DEVUKO_CRM_DEPLOY_KEY }}
+        id: deploy_key
         run: |
           set -euo pipefail
-          if [[ -z "${DEPLOY_KEY// }" ]]; then
-            echo "DEVUKO_CRM_DEPLOY_KEY is empty" >&2
-            exit 1
+          if [[ -z "${DEPLOY_KEY:-}" ]]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "DEVUKO_CRM_DEPLOY_KEY is not configured — skipping deploy"
+            exit 0
           fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
           mkdir -p /home/runner/.ssh
           key_file=/home/runner/.ssh/deploy_key
           compact=$(printf '%s' "$DEPLOY_KEY" | tr -d '\r\n')
@@ -34,6 +37,7 @@ jobs:
           ssh-keygen -y -f "$key_file" >/dev/null
 
       - name: SSH deploy
+        if: steps.deploy_key.outputs.skip != 'true'
         uses: appleboy/ssh-action@v1.2.0
         env:
           DEVUKO_CRM_REPO_ROOT: ${{ secrets.DEVUKO_CRM_REPO_ROOT }}
@@ -57,4 +61,5 @@ jobs:
             echo "==> smoke test API"
             curl -fsS "http://127.0.0.1:8095/health" | grep -q '"ok":true'
             echo "==> smoke test HTTPS"
-            curl -fsS "https://crm.devuko.ru/health" | grep -q '"ok":true'
+            curl -fsS --resolve crm.devuko.ru:443:127.0.0.1 "https://crm.devuko.ru/health" | grep -q '"ok":true' \
+              || curl -fsS "https://crm.devuko.ru/health" | grep -q '"ok":true'

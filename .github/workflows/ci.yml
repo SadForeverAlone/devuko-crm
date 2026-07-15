@@ -132,6 +132,9 @@ jobs:
       DEV_ALLOW_WEAK_JWT: "true"
       DEVUKO_CRM_DEPLOY_ENABLED: "false"
       NODE_ENV: test
+      SWAGGER_ENABLED: "false"
+      PORT: "8095"
+      BIND_HOST: "0.0.0.0"
       PLAYWRIGHT_OTP_ECHO: "true"
       PLAYWRIGHT_CRM_LOGIN: ci-admin@devuko.test
       PLAYWRIGHT_CRM_PASSWORD: CiAdminPassw0rd!
@@ -154,7 +157,7 @@ jobs:
       - name: Start API for auth e2e
         working-directory: apps/api
         run: |
-          node dist/main.js &
+          node dist/main.js > /tmp/crm-api.log 2>&1 &
           echo $! > /tmp/crm-api.pid
           for i in $(seq 1 45); do
             if curl -fsS http://127.0.0.1:8095/health >/dev/null; then
@@ -164,6 +167,7 @@ jobs:
             sleep 1
           done
           echo "API failed to start" >&2
+          cat /tmp/crm-api.log >&2 || true
           exit 1
       - name: Install web dependencies
         working-directory: apps/web

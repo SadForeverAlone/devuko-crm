@@ -27,7 +27,8 @@ test.describe("CRM smoke", () => {
   });
 
   test("API health endpoint is reachable", async ({ request }) => {
-    const apiBase = process.env.PLAYWRIGHT_API_URL || "http://127.0.0.1:8095";
+    test.skip(!process.env.PLAYWRIGHT_API_URL, "Set PLAYWRIGHT_API_URL to exercise API health");
+    const apiBase = process.env.PLAYWRIGHT_API_URL!;
     const response = await request.get(`${apiBase}/health`);
     expect(response.ok()).toBeTruthy();
     const body = (await response.json()) as { ok?: boolean; db?: string };

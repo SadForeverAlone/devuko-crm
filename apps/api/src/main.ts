@@ -62,7 +62,7 @@ async function bootstrap() {
   app.useGlobalFilters(new ProductionExceptionFilter());
 
   const swaggerEnabled =
-    process.env.SWAGGER_ENABLED === "true" || process.env.NODE_ENV !== "production";
+    process.env.SWAGGER_ENABLED === "true" || process.env.NODE_ENV === "development";
   if (swaggerEnabled) {
     const document = SwaggerModule.createDocument(
       app,

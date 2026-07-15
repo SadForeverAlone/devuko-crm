@@ -63,6 +63,15 @@ describeDb("API DB integration", () => {
 
   beforeEach(async () => {
     const db = app.get(DatabaseService);
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS "CrmRateLimit" (
+        "key" TEXT PRIMARY KEY,
+        "hits" INTEGER NOT NULL DEFAULT 0,
+        "expiresAt" BIGINT NOT NULL,
+        "isBlocked" BOOLEAN NOT NULL DEFAULT FALSE,
+        "blockExpiresAt" BIGINT NOT NULL DEFAULT 0
+      )
+    `);
     await db.execute(`TRUNCATE TABLE "CrmRateLimit"`);
     await db.execute(`DELETE FROM "CrmAuthOtp" WHERE lower("email") = lower($1)`, [login]);
   });
