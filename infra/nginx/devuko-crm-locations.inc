@@ -1,6 +1,4 @@
-# Included inside server { } for crm.devuko.ru (HTTP/HTTPS).
-# Security headers live in devuko-crm-security-headers.inc and must be included
-# in every location that also sets add_header (nginx inheritance quirk).
+# Locations for crm.devuko.ru. Re-include security headers where add_header is used.
 
     client_max_body_size 50m;
 
