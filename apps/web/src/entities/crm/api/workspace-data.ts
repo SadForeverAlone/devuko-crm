@@ -1,4 +1,4 @@
-import { crmFetch } from "./client";
+import { crmFetch, crmQuery } from "./client";
 import { getStoredCrmWorkspaceId } from "./storage";
 import type { CrmOverview } from "./types";
 
@@ -10,15 +10,16 @@ export async function getCrmOverview(input?: {
   dateTo?: string;
   contactSearch?: string;
 }) {
-  const params = new URLSearchParams();
-  params.set("limit", String(input?.limit ?? 100));
-  if (input?.offset) params.set("offset", String(input.offset));
-  if (input?.action) params.set("action", input.action);
-  if (input?.dateFrom) params.set("dateFrom", input.dateFrom);
-  if (input?.dateTo) params.set("dateTo", input.dateTo);
-  if (input?.contactSearch) params.set("contactSearch", input.contactSearch);
-  params.set("workspaceId", getStoredCrmWorkspaceId());
-  return crmFetch<CrmOverview>(`/admin/crm/overview?${params.toString()}`);
+  const query = crmQuery({
+    limit: input?.limit ?? 100,
+    offset: input?.offset,
+    action: input?.action,
+    dateFrom: input?.dateFrom,
+    dateTo: input?.dateTo,
+    contactSearch: input?.contactSearch,
+    workspaceId: getStoredCrmWorkspaceId(),
+  });
+  return crmFetch<CrmOverview>(`/admin/crm/overview?${query}`);
 }
 
 export async function getCrmUsers(input?: {
@@ -28,12 +29,7 @@ export async function getCrmUsers(input?: {
   orderBy?: "createdAt" | "email" | "displayName" | "login";
   orderDir?: "asc" | "desc";
 }) {
-  const params = new URLSearchParams();
-  params.set("limit", String(input?.limit ?? 200));
-  if (input?.offset) params.set("offset", String(input.offset));
-  if (input?.search) params.set("search", input.search);
-  if (input?.orderBy) params.set("orderBy", input.orderBy);
-  if (input?.orderDir) params.set("orderDir", input.orderDir);
+  const query = crmQuery({ limit: input?.limit ?? 200, ...input });
   return crmFetch<
     Array<{
       id: string;
@@ -46,7 +42,7 @@ export async function getCrmUsers(input?: {
       country?: string | null;
       createdAt: string;
     }>
-  >(`/admin/crm/users?${params.toString()}`);
+  >(`/admin/crm/users?${query}`);
 }
 
 export async function updateCrmUser(
@@ -109,21 +105,14 @@ export async function getCrmContacts(input?: {
   dateFrom?: string;
   dateTo?: string;
 }) {
-  const params = new URLSearchParams();
-  params.set("limit", String(input?.limit ?? 200));
-  if (input?.offset) params.set("offset", String(input.offset));
-  if (input?.search) params.set("search", input.search);
-  if (input?.dateFrom) params.set("dateFrom", input.dateFrom);
-  if (input?.dateTo) params.set("dateTo", input.dateTo);
+  const query = crmQuery({ limit: input?.limit ?? 200, ...input });
   return crmFetch<Array<{ id: string; name: string; email: string; message: string; status: string; createdAt: string }>>(
-    `/admin/crm/contacts?${params.toString()}`
+    `/admin/crm/contacts?${query}`
   );
 }
 
 export async function getCrmPromises(input?: { limit?: number; offset?: number }) {
-  const params = new URLSearchParams();
-  params.set("limit", String(input?.limit ?? 100));
-  if (input?.offset) params.set("offset", String(input.offset));
+  const query = crmQuery({ limit: input?.limit ?? 100, ...input });
   return crmFetch<
     Array<{
       id: string;
@@ -139,13 +128,11 @@ export async function getCrmPromises(input?: { limit?: number; offset?: number }
       proofCount: number;
       user: { id: string; email: string; displayName: string };
     }>
-  >(`/admin/crm/promises?${params.toString()}`);
+  >(`/admin/crm/promises?${query}`);
 }
 
 export async function getCrmPages(input?: { limit?: number; offset?: number }) {
-  const params = new URLSearchParams();
-  params.set("limit", String(input?.limit ?? 100));
-  if (input?.offset) params.set("offset", String(input.offset));
+  const query = crmQuery({ limit: input?.limit ?? 100, ...input });
   return crmFetch<
     Array<{
       id: string;
@@ -154,13 +141,11 @@ export async function getCrmPages(input?: { limit?: number; offset?: number }) {
       uniqueUsers: number;
       conversion: string;
     }>
-  >(`/admin/crm/pages?${params.toString()}`);
+  >(`/admin/crm/pages?${query}`);
 }
 
 export async function getCrmReports(input?: { limit?: number; offset?: number }) {
-  const params = new URLSearchParams();
-  params.set("limit", String(input?.limit ?? 100));
-  if (input?.offset) params.set("offset", String(input.offset));
+  const query = crmQuery({ limit: input?.limit ?? 100, ...input });
   return crmFetch<
     Array<{
       id: string;
@@ -171,5 +156,5 @@ export async function getCrmReports(input?: { limit?: number; offset?: number })
       status: string;
       description: string;
     }>
-  >(`/admin/crm/reports?${params.toString()}`);
+  >(`/admin/crm/reports?${query}`);
 }

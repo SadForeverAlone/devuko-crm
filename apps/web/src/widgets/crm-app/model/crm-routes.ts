@@ -1,5 +1,5 @@
 import type { CrmTab } from "./types";
-import type { DashboardPart } from "../ui/sections/sectionTypes";
+import type { DashboardPart } from "@/shared/crm/ui/sectionTypes";
 import type { InfrastructureSection, ProjectDetailTab } from "./platform-nav";
 
 export const crmTabPathMap: Record<CrmTab, string> = {

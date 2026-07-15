@@ -1,32 +1,39 @@
-import "./crm.css";
-import "./platform.css";
+import { Outlet } from "react-router-dom";
 import { useCrmWorkspace } from "../model/useCrmWorkspace";
+import { CrmWorkspaceProvider } from "../model/crm-workspace-context";
 import { CrmAuthenticatedLayout } from "./CrmAuthenticatedLayout";
-import { CrmLoginScreen } from "./CrmLoginScreen";
+import { CrmLoginFlow } from "@/features/auth";
 
 export function CrmApp() {
   const workspace = useCrmWorkspace();
 
   if (!workspace.token) {
-    const authUi = workspace.authUi;
     return (
-      <CrmLoginScreen
-        title={authUi.crmLoginTitle}
-        subtitle={authUi.crmLoginSubtitle}
-        loginLabel={authUi.crmLoginFieldLogin}
-        passwordLabel={authUi.crmLoginFieldPassword}
-        loginPlaceholder={authUi.crmLoginPlaceholderLogin}
-        passwordPlaceholder={authUi.crmLoginPlaceholderPassword}
-        submitLabel={authUi.crmLoginSubmit}
-        login={workspace.login}
-        password={workspace.password}
-        loginError={workspace.loginError}
-        onLoginChange={workspace.setLogin}
-        onPasswordChange={workspace.setPassword}
-        onSubmit={() => void workspace.handleLogin()}
-      />
+      <>
+        <CrmLoginFlow
+          crmLang={workspace.crmLang}
+          email={workspace.email}
+          login={workspace.login}
+          password={workspace.password}
+          code={workspace.code}
+          authStep={workspace.authStep}
+          loginError={workspace.loginError}
+          submitting={workspace.submitting}
+          onLoginChange={workspace.setLogin}
+          onPasswordChange={workspace.setPassword}
+          onCodeChange={workspace.setCode}
+          onContinue={() => void workspace.handleRequestOtp()}
+          onVerify={() => void workspace.handleVerifyOtp()}
+          onBack={workspace.handleBackToCredentials}
+        />
+        <Outlet />
+      </>
     );
   }
 
-  return <CrmAuthenticatedLayout workspace={workspace} />;
+  return (
+    <CrmWorkspaceProvider value={workspace}>
+      <CrmAuthenticatedLayout />
+    </CrmWorkspaceProvider>
+  );
 }

@@ -1,5 +1,5 @@
 import type { CrmDockerContainer, CrmSite } from "@/entities/crm";
-import { filterProjectContainers } from "@/widgets/crm-app/ui/sections/project-detail.lib";
+import { filterProjectContainers } from "@/features/crm-sites/ui/project-detail.lib";
 
 export type SiteRecordGroup<T> = {
   site: CrmSite | null;

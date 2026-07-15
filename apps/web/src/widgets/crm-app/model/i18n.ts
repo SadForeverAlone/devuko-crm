@@ -115,12 +115,25 @@ export type CrmCopy = {
   taskDetailOwner: string;
   crmLoginTitle: string;
   crmLoginSubtitle: string;
-  crmLoginFieldLogin: string;
+  crmLoginStepCredentials: string;
+  crmLoginStepCode: string;
+  crmLoginFieldEmail: string;
+  crmLoginPlaceholderEmail: string;
   crmLoginFieldPassword: string;
-  crmLoginSubmit: string;
-  crmLoginError: string;
-  crmLoginPlaceholderLogin: string;
   crmLoginPlaceholderPassword: string;
+  crmLoginFieldCode: string;
+  crmLoginContinue: string;
+  crmLoginSending: string;
+  crmLoginVerify: string;
+  crmLoginBack: string;
+  crmLoginCodeHint: string;
+  crmLoginOtpSentToast: string;
+  crmLoginCredentialsRequired: string;
+  crmLoginError: string;
+  crmLoginCodeInvalid: string;
+  crmLoginCodeError: string;
+  crmLoginOtpSendError: string;
+  crmLoginOtpCooldown: string;
   logStatusNoCode: string;
   logStatusError: string;
   logStatusClientError: string;
@@ -420,13 +433,26 @@ export const crmCopy: Record<CrmLang, CrmCopy> = {
     taskColCreated: "Создана",
     taskDetailOwner: "Ответственный",
     crmLoginTitle: "Devuko CRM",
-    crmLoginSubtitle: "Управление платформой, сайтами и workspace",
-    crmLoginFieldLogin: "Логин",
+    crmLoginSubtitle: "Вход: email и пароль, затем код подтверждения на почту",
+    crmLoginStepCredentials: "Вход",
+    crmLoginStepCode: "Код",
+    crmLoginFieldEmail: "Email",
+    crmLoginPlaceholderEmail: "admin@devuko.ru",
     crmLoginFieldPassword: "Пароль",
-    crmLoginSubmit: "Войти в CRM",
-    crmLoginError: "Неверный логин или пароль.",
-    crmLoginPlaceholderLogin: "Логин или email",
     crmLoginPlaceholderPassword: "Пароль",
+    crmLoginFieldCode: "Код из письма",
+    crmLoginContinue: "Продолжить",
+    crmLoginSending: "Отправка…",
+    crmLoginVerify: "Войти",
+    crmLoginBack: "Назад",
+    crmLoginCodeHint: "Код отправлен на {email}. Введите 6 цифр — он действует 10 минут.",
+    crmLoginOtpSentToast: "Код отправлен на {email}",
+    crmLoginCredentialsRequired: "Укажите email и пароль.",
+    crmLoginError: "Неверный email или пароль.",
+    crmLoginCodeInvalid: "Введите 6-значный код.",
+    crmLoginCodeError: "Неверный или просроченный код.",
+    crmLoginOtpSendError: "Не удалось отправить код. Попробуйте снова.",
+    crmLoginOtpCooldown: "Подождите минуту перед повторной отправкой.",
     logStatusNoCode: "Без кода",
     logStatusError: "Ошибка",
     logStatusClientError: "Отклонено",
@@ -724,13 +750,26 @@ export const crmCopy: Record<CrmLang, CrmCopy> = {
     taskColCreated: "Created",
     taskDetailOwner: "Owner",
     crmLoginTitle: "Devuko CRM",
-    crmLoginSubtitle: "Platform, sites and workspace management",
-    crmLoginFieldLogin: "Login",
+    crmLoginSubtitle: "Sign in with email and password, then confirm with a code sent to your inbox",
+    crmLoginStepCredentials: "Sign in",
+    crmLoginStepCode: "Code",
+    crmLoginFieldEmail: "Email",
+    crmLoginPlaceholderEmail: "admin@devuko.ru",
     crmLoginFieldPassword: "Password",
-    crmLoginSubmit: "Sign in to CRM",
-    crmLoginError: "Invalid login or password.",
-    crmLoginPlaceholderLogin: "Login or email",
     crmLoginPlaceholderPassword: "Password",
+    crmLoginFieldCode: "Code from email",
+    crmLoginContinue: "Continue",
+    crmLoginSending: "Sending…",
+    crmLoginVerify: "Sign in",
+    crmLoginBack: "Back",
+    crmLoginCodeHint: "Code sent to {email}. Enter 6 digits — valid for 10 minutes.",
+    crmLoginOtpSentToast: "Code sent to {email}",
+    crmLoginCredentialsRequired: "Enter email and password.",
+    crmLoginError: "Invalid email or password.",
+    crmLoginCodeInvalid: "Enter the 6-digit code.",
+    crmLoginCodeError: "Invalid or expired code.",
+    crmLoginOtpSendError: "Could not send the code. Try again.",
+    crmLoginOtpCooldown: "Please wait a minute before requesting another code.",
     logStatusNoCode: "No code",
     logStatusError: "Error",
     logStatusClientError: "Rejected",

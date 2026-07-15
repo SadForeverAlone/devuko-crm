@@ -1,12 +1,37 @@
 import { apiFetch } from "@/shared/api/http";
-import { getStoredCrmToken } from "./storage";
 import { crmFetch } from "./client";
 import type { CrmSession } from "./types";
 
+const authFetchInit: RequestInit = { credentials: "include" };
+
 export async function loginCrm(login: string, password: string) {
   return apiFetch<{ ok: boolean; token?: string }>("/crm-auth/login", {
+    ...authFetchInit,
     method: "POST",
     body: JSON.stringify({ login, password }),
+  });
+}
+
+export async function requestCrmOtp(login: string, password: string) {
+  return apiFetch<{ ok: boolean; email?: string }>("/crm-auth/otp/request", {
+    ...authFetchInit,
+    method: "POST",
+    body: JSON.stringify({ login, password }),
+  });
+}
+
+export async function verifyCrmOtp(email: string, code: string) {
+  return apiFetch<{ ok: boolean; token?: string }>("/crm-auth/otp/verify", {
+    ...authFetchInit,
+    method: "POST",
+    body: JSON.stringify({ email, code }),
+  });
+}
+
+export async function logoutCrm() {
+  return apiFetch<{ ok: boolean }>("/crm-auth/logout", {
+    ...authFetchInit,
+    method: "POST",
   });
 }
 
@@ -15,20 +40,5 @@ export async function getCrmSession() {
 }
 
 export function getCrmSessionFromToken() {
-  const token = getStoredCrmToken();
-  if (!token) {
-    return null;
-  }
-  try {
-    const payload = JSON.parse(atob(token.split(".")[1] ?? "")) as {
-      sub?: string;
-      email?: string;
-    };
-    if (!payload.sub) {
-      return null;
-    }
-    return { id: String(payload.sub), email: String(payload.email ?? "") };
-  } catch {
-    return null;
-  }
+  return null;
 }

@@ -1,5 +1,17 @@
 import { getApiBaseUrl } from "../lib/env";
 
+const CRM_CSRF_COOKIE = "devuko_crm_csrf";
+const CRM_CSRF_HEADER = "x-csrf-token";
+const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+function readCsrfToken(): string {
+  if (typeof document === "undefined") {
+    return "";
+  }
+  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${CRM_CSRF_COOKIE}=([^;]+)`));
+  return match ? decodeURIComponent(match[1]) : "";
+}
+
 export class ApiError extends Error {
   constructor(
     readonly status: number,
@@ -17,7 +29,15 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
   if (init?.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
-  const res = await fetch(url, { ...init, headers });
+  const method = (init?.method ?? "GET").toUpperCase();
+  if (MUTATING_METHODS.has(method) && !headers.has(CRM_CSRF_HEADER)) {
+    const csrfToken = readCsrfToken();
+    if (!csrfToken) {
+      throw new ApiError(0, "Missing CSRF token — refresh the page and sign in again");
+    }
+    headers.set(CRM_CSRF_HEADER, csrfToken);
+  }
+  const res = await fetch(url, { credentials: "include", ...init, headers });
   if (!res.ok) {
     let message = res.statusText || "Request failed";
     try {

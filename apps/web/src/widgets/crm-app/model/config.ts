@@ -36,75 +36,37 @@ export const crmShortcutItems: Array<{ key: CrmTab; label: Record<CrmLang, strin
   { key: "reports", label: { ru: "Отчёты", en: "Reports" }, icon: faSquarePollVertical },
 ];
 
-export const mockTasks: TaskRecord[] = [
-  {
-    id: "TSK-1001",
-    title: "Проверить обращения из Contact Us",
-    description: "Разобрать новые сообщения пользователей с основного сайта и назначить ответственных.",
-    status: "В Процессе",
-    createdAt: "2026-04-15T09:20:00.000Z",
-    owner: "Support Team",
-  },
-  {
-    id: "TSK-1002",
-    title: "Обновить welcome-сценарий для CRM",
-    description: "Согласовать новый текст onboarding для админов и менеджеров.",
-    status: "Новая",
-    createdAt: "2026-04-14T12:10:00.000Z",
-    owner: "Product Ops",
-  },
-  {
-    id: "TSK-1003",
-    title: "Закрыть баг с невалидными proof",
-    description: "Проверить загрузки доказательств и отметить обещания без файлов.",
-    status: "Выполнена",
-    createdAt: "2026-04-12T18:45:00.000Z",
-    owner: "Moderation",
-  },
-];
+export const mockTasks: TaskRecord[] = import.meta.env.DEV
+  ? [
+      {
+        id: "TSK-1001",
+        title: "Проверить обращения из Contact Us",
+        description: "Разобрать новые сообщения пользователей с основного сайта и назначить ответственных.",
+        status: "В Процессе",
+        createdAt: "2026-04-15T09:20:00.000Z",
+        owner: "Support Team",
+      },
+    ]
+  : [];
 
-export const mockFiles: FileRecord[] = [
-  { id: "FL-301", title: "brand-guidelines.pdf", type: "PDF", owner: "Marketing", updatedAt: "2026-04-11T08:20:00.000Z", status: "Актуально" },
-  { id: "FL-302", title: "support-replies.docx", type: "DOCX", owner: "Support", updatedAt: "2026-04-14T10:00:00.000Z", status: "На согласовании" },
-  { id: "FL-303", title: "promises-export.xlsx", type: "XLSX", owner: "Analytics", updatedAt: "2026-04-16T07:40:00.000Z", status: "Обновлено" },
-  { id: "FL-304", title: "faq-v2.txt", type: "TXT", owner: "Content", updatedAt: "2026-04-10T18:35:00.000Z", status: "Черновик" },
-];
+export const mockFiles: FileRecord[] = import.meta.env.DEV
+  ? [
+      {
+        id: "FL-301",
+        title: "brand-guidelines.pdf",
+        type: "PDF",
+        owner: "Marketing",
+        updatedAt: "2026-04-11T08:20:00.000Z",
+        status: "Актуально",
+      },
+    ]
+  : [];
 
-export const mockReports: ReportRecord[] = [
-  {
-    id: "REP-01",
-    title: "Ошибка при отправке доказательств",
-    severity: "High",
-    channel: "Основной сайт",
-    createdAt: "2026-04-16T09:35:00.000Z",
-    status: "Открыт",
-    description: "Пользователь видит таймаут после загрузки proof в форме обещания.",
-  },
-  {
-    id: "REP-02",
-    title: "Не приходит письмо подтверждения",
-    severity: "Medium",
-    channel: "Основной сайт",
-    createdAt: "2026-04-15T18:20:00.000Z",
-    status: "В работе",
-    description: "Часть новых пользователей не получает welcome email после регистрации.",
-  },
-  {
-    id: "REP-03",
-    title: "Сломан фильтр на мобильном",
-    severity: "Low",
-    channel: "Landing",
-    createdAt: "2026-04-14T14:10:00.000Z",
-    status: "Подтвержден",
-    description: "Фильтр категорий не закрывается после выбора на экранах меньше 390px.",
-  },
-];
+export const mockReports: ReportRecord[] = [];
 
-export const mockCalls: CallRecord[] = [
-  { id: "CALL-01", manager: "Анна К.", queue: "Sales", handled: 28, missed: 2, avgTime: "03:42", status: "Онлайн" },
-  { id: "CALL-02", manager: "Илья Р.", queue: "Support", handled: 31, missed: 5, avgTime: "05:10", status: "Онлайн" },
-  { id: "CALL-03", manager: "Мария Д.", queue: "VIP", handled: 12, missed: 0, avgTime: "07:18", status: "Перерыв" },
-];
+export const mockCalls: CallRecord[] = import.meta.env.DEV
+  ? [{ id: "CALL-01", manager: "Demo", queue: "Support", handled: 0, missed: 0, avgTime: "—", status: "Offline" }]
+  : [];
 
 type CrmSettingsField = {
   key: string;

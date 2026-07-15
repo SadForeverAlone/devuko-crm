@@ -1,9 +1,12 @@
 export {
   clearStoredCrmToken,
+  CRM_AUTH_SESSION_MARKER,
   getStoredCrmToken,
   getStoredCrmWorkspaceId,
   getStoredCrmWorkspaceMeta,
   PLATFORM_WORKSPACE_ID,
+  resolveInitialCrmAuthToken,
+  setStoredCrmAuthSession,
   setStoredCrmToken,
   setStoredCrmWorkspace,
   setStoredCrmWorkspaceId,
@@ -29,7 +32,7 @@ export type {
   CrmWorkspace,
 } from "./types";
 
-export { getCrmSession, getCrmSessionFromToken, loginCrm } from "./auth";
+export { getCrmSession, getCrmSessionFromToken, loginCrm, logoutCrm, requestCrmOtp, verifyCrmOtp } from "./auth";
 export { deployCrmPlatform, getCrmPlatformLogs, getCrmPlatformMetrics, getCrmPlatformStatus } from "./platform";
 export { createCrmAdmin, deleteCrmAdmin, getCrmAdmins, updateCrmAdmin } from "./admins";
 export {

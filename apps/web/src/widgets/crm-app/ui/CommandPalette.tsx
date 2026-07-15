@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMagnifyingGlass, faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import type { CrmLang } from "@/widgets/crm-app/model/types";
@@ -22,6 +22,9 @@ export function CommandPalette({
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const listboxId = useId();
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   const items = useMemo(() => buildCommandPaletteItems(isPlatformWorkspace), [isPlatformWorkspace]);
 
@@ -47,12 +50,17 @@ export function CommandPalette({
     return [...map.entries()];
   }, [filtered, crmLang]);
 
+  const activeOptionId = filtered[activeIndex] ? `${listboxId}-option-${filtered[activeIndex].id}` : undefined;
+
   useEffect(() => {
     if (!open) {
       setQuery("");
       setActiveIndex(0);
+      previousFocusRef.current?.focus?.();
+      previousFocusRef.current = null;
       return;
     }
+    previousFocusRef.current = document.activeElement as HTMLElement | null;
     const timer = window.setTimeout(() => inputRef.current?.focus(), 0);
     return () => window.clearTimeout(timer);
   }, [open]);
@@ -63,12 +71,37 @@ export function CommandPalette({
 
   useEffect(() => {
     if (!open) return;
+
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
         onClose();
         return;
       }
+
+      if (event.key === "Tab") {
+        const dialog = dialogRef.current;
+        if (!dialog) return;
+        const focusable = dialog.querySelectorAll<HTMLElement>(
+          'input, button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) {
+          event.preventDefault();
+          return;
+        }
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const active = document.activeElement as HTMLElement | null;
+        if (event.shiftKey && active === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && active === last) {
+          event.preventDefault();
+          first.focus();
+        }
+        return;
+      }
+
       if (event.key === "ArrowDown") {
         event.preventDefault();
         setActiveIndex((i) => Math.min(i + 1, Math.max(filtered.length - 1, 0)));
@@ -83,6 +116,7 @@ export function CommandPalette({
         onClose();
       }
     };
+
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, filtered, activeIndex, onClose, onNavigate]);
@@ -92,34 +126,48 @@ export function CommandPalette({
   let flatIndex = -1;
 
   return (
-    <div className="dv-cmd-palette-backdrop" role="presentation" onClick={onClose}>
+    <div
+      className="dv-cmd-palette-backdrop"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
       <div
+        ref={dialogRef}
         className="dv-cmd-palette"
         role="dialog"
         aria-modal="true"
         aria-label={crmLang === "ru" ? "Командная палитра" : "Command palette"}
-        onClick={(event) => event.stopPropagation()}
       >
         <div className="dv-cmd-palette__search">
-          <FontAwesomeIcon icon={faMagnifyingGlass} />
+          <FontAwesomeIcon icon={faMagnifyingGlass} aria-hidden />
           <input
             ref={inputRef}
             type="search"
             className="dv-cmd-palette__input"
             placeholder={crmLang === "ru" ? "Поиск команд и страниц…" : "Search commands and pages…"}
+            aria-label={crmLang === "ru" ? "Поиск команд и страниц" : "Search commands and pages"}
+            role="combobox"
+            aria-expanded="true"
+            aria-controls={listboxId}
+            aria-autocomplete="list"
+            aria-activedescendant={activeOptionId}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
-          <kbd className="dv-cmd-palette__kbd">Esc</kbd>
+          <kbd className="dv-cmd-palette__kbd" aria-hidden="true">
+            Esc
+          </kbd>
         </div>
-        <div className="dv-cmd-palette__results">
+        <div className="dv-cmd-palette__results" id={listboxId} role="listbox">
           {filtered.length === 0 ? (
             <p className="dv-cmd-palette__empty">
               {crmLang === "ru" ? "Ничего не найдено" : "No results"}
             </p>
           ) : (
             grouped.map(([group, groupItems]) => (
-              <div key={group} className="dv-cmd-palette__group">
+              <div key={group} className="dv-cmd-palette__group" role="group" aria-label={group}>
                 <p className="dv-cmd-palette__group-label">{group}</p>
                 {groupItems.map((item) => {
                   flatIndex += 1;
@@ -127,7 +175,10 @@ export function CommandPalette({
                   return (
                     <button
                       key={item.id}
+                      id={`${listboxId}-option-${item.id}`}
                       type="button"
+                      role="option"
+                      aria-selected={index === activeIndex}
                       className={
                         index === activeIndex
                           ? "dv-cmd-palette__item dv-cmd-palette__item--active"
@@ -140,7 +191,7 @@ export function CommandPalette({
                       }}
                     >
                       <span>{item.label[crmLang]}</span>
-                      <FontAwesomeIcon icon={faArrowRight} />
+                      <FontAwesomeIcon icon={faArrowRight} aria-hidden />
                     </button>
                   );
                 })}
@@ -151,21 +202,4 @@ export function CommandPalette({
       </div>
     </div>
   );
-}
-
-export function useCommandPalette() {
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        setOpen((value) => !value);
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
-
-  return { open, setOpen };
 }

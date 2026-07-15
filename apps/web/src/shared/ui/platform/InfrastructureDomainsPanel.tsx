@@ -1,7 +1,7 @@
 import { faGlobe } from "@fortawesome/free-solid-svg-icons";
 import type { CrmSite } from "@/entities/crm";
 import type { CrmLang } from "@/widgets/crm-app/model/types";
-import { SiteStatusBadge } from "@/widgets/crm-app/ui/sections/SiteStatusBadge";
+import { SiteStatusBadge } from "@/features/crm-sites/ui/SiteStatusBadge";
 import { PlatformCard } from "./PlatformCard";
 import { PlatformRecordTable } from "./PlatformRecordTable";
 import { sitePortsMeta } from "./platform-records.lib";

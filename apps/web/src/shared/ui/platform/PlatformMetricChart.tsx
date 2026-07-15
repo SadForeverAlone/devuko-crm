@@ -89,7 +89,9 @@ export function PlatformSparkline({
   const last = points[points.length - 1];
 
   return (
-    <div className={`crm-monitor-sparkline ${className}`.trim()} style={{ height }}>
+    <div
+      className={`crm-monitor-sparkline crm-monitor-sparkline--h${height} ${className}`.trim()}
+    >
       {points.length > 0 ? (
         <svg viewBox={`0 0 ${width} ${vbHeight}`} preserveAspectRatio="none" className="crm-monitor-sparkline__svg" aria-hidden>
           <defs>

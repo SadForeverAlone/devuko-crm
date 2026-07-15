@@ -1,4 +1,4 @@
-import { crmFetch } from "./client";
+import { crmFetch, crmQuery } from "./client";
 import type { CrmAdmin } from "./types";
 
 export async function getCrmAdmins(input?: {
@@ -8,13 +8,8 @@ export async function getCrmAdmins(input?: {
   orderBy?: "createdAt" | "email" | "displayName" | "login" | "firstName";
   orderDir?: "asc" | "desc";
 }) {
-  const params = new URLSearchParams();
-  params.set("limit", String(input?.limit ?? 200));
-  if (input?.offset) params.set("offset", String(input.offset));
-  if (input?.search) params.set("search", input.search);
-  if (input?.orderBy) params.set("orderBy", input.orderBy);
-  if (input?.orderDir) params.set("orderDir", input.orderDir);
-  return crmFetch<CrmAdmin[]>(`/admin/crm/admins?${params.toString()}`);
+  const query = crmQuery({ limit: input?.limit ?? 200, ...input });
+  return crmFetch<CrmAdmin[]>(`/admin/crm/admins?${query}`);
 }
 
 export async function createCrmAdmin(input: {

@@ -585,8 +585,8 @@
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
   overflow: hidden;
   transition:
-    border-color 160ms ease,
-    box-shadow 160ms ease;
+    border-color var(--crm-motion, 160ms ease),
+    box-shadow var(--crm-motion, 160ms ease);
 }
 
 .dv-cmd-palette:focus-within {
@@ -725,6 +725,31 @@
   );
   background-size: 200% 100%;
   animation: dv-skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+.dv-skeleton--w-full {
+  width: 100%;
+}
+.dv-skeleton--w-sm {
+  width: 40%;
+}
+.dv-skeleton--w-md {
+  width: 55%;
+}
+.dv-skeleton--w-lg {
+  width: 70%;
+}
+.dv-skeleton--h-xs {
+  height: 0.65rem;
+}
+.dv-skeleton--h-sm {
+  height: 0.75rem;
+}
+.dv-skeleton--h-md {
+  height: 1rem;
+}
+.dv-skeleton--h-lg {
+  height: 1.75rem;
 }
 
 @keyframes dv-skeleton-shimmer {

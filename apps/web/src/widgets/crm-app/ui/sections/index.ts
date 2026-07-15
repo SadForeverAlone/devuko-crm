@@ -1,24 +1,22 @@
-export { AutomationSection } from "./AutomationSection";
-export { DashboardSection } from "./DashboardSection";
-export { DashboardDetailSection } from "./DashboardDetailSection";
-export { DeploymentsSection } from "./DeploymentsSection";
-export { InfrastructureSectionView } from "./InfrastructureSection";
-export { MonitoringSection } from "./MonitoringSection";
-export { NotificationsSection } from "./NotificationsSection";
-export { PlatformAdminsSection } from "./PlatformAdminsSection";
-export { PlatformDashboardV2Section } from "./PlatformDashboardV2Section";
-export { PlatformLogsSection } from "./PlatformLogsSection";
-export { ProvisionLogTable } from "./ProvisionLogTable";
-export { PlatformSettingsSection } from "./PlatformSettingsSection";
-export { ProjectDetailSection } from "./ProjectDetailSection";
-export { LogsSection } from "./LogsSection";
-export { UsersSection } from "./UsersSection";
-export { PromisesSection } from "./PromisesSection";
-export { TasksSection } from "./TasksSection";
-export { PagesSection } from "./PagesSection";
-export { FilesSection } from "./FilesSection";
-export { ReportsSection } from "./ReportsSection";
-export { CallTrackerSection } from "./CallTrackerSection";
-export { SettingsSection } from "./SettingsSection";
-export { ContactsSection } from "./ContactsSection";
-export { SitesSection } from "./SitesSection";
+export {
+  LazyAutomationSection,
+  LazyContactsSection,
+  LazyDashboardSection,
+  LazyDeploymentsSection,
+  LazyInfrastructureSectionView,
+  LazyLogsSection,
+  LazyMonitoringSection,
+  LazyNotificationsSection,
+  LazyPagesSection,
+  LazyPlatformAdminsSection,
+  LazyPlatformDashboardV2Section,
+  LazyPlatformLogsSection,
+  LazyPlatformSettingsSection,
+  LazyProjectDetailSection,
+  LazyPromisesSection,
+  LazyReportsSection,
+  LazySettingsSection,
+  LazySitesSection,
+  LazyUsersSection,
+  DashboardDetailSection,
+} from "./lazySections";

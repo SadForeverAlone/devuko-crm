@@ -1,0 +1,10 @@
+html,
+body,
+#root {
+  margin: 0;
+  width: 100%;
+  min-height: 100dvh;
+  height: 100dvh;
+  background: #0b0b0d;
+  color: #fff;
+}

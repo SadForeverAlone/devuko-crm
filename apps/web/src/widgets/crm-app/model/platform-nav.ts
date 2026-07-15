@@ -3,7 +3,6 @@ import {
   faBell,
   faChartColumn,
   faChartLine,
-  faCloud,
   faFolderTree,
   faGear,
   faGlobe,

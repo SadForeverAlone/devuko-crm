@@ -1,6 +1,7 @@
 :root {
   --crm-input-focus-border: rgba(139, 92, 246, 0.45);
   --crm-input-focus-ring: 0 0 0 3px rgba(99, 102, 241, 0.12);
+  --crm-motion: 160ms ease;
 }
 
 .spx-input,
@@ -16,9 +17,9 @@
   outline: none;
   box-shadow: none;
   transition:
-    border-color 160ms ease,
-    box-shadow 160ms ease,
-    background-color 160ms ease;
+    border-color var(--crm-motion),
+    box-shadow var(--crm-motion),
+    background-color var(--crm-motion);
 }
 
 .spx-input:focus,
@@ -45,6 +46,26 @@
   margin: 10px 0 0;
   color: #f87171;
   font-size: 13px;
+}
+
+.crm-error-boundary {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+  background: #0a0a0b;
+  color: #f4f4f5;
+}
+
+.crm-error-boundary button {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  border-radius: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
 }
 
 .devuko-toast-stack {

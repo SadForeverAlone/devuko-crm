@@ -1,53 +1,58 @@
 import { useMemo } from "react";
-import { useLocation } from "react-router-dom";
-import type { useCrmWorkspace } from "../model/useCrmWorkspace";
 import {
-  ContactsSection,
-  DashboardDetailSection,
-  DashboardSection,
-  LogsSection,
-  PagesSection,
-  PromisesSection,
-  ReportsSection,
-  SettingsSection,
-  UsersSection,
-} from "./sections";
-import { withCrmSectionSuspense } from "./sections/CrmSectionSuspense";
+  useCrmWorkspaceAdminOps,
+  useCrmWorkspaceChromeState,
+  useCrmWorkspaceDataView,
+  useCrmWorkspaceFilters,
+  useCrmWorkspaceNavigation,
+  useCrmWorkspaceSiteOps,
+} from "../model/useCrmWorkspaceSlices";
+import { useCrmProjectsTabModel } from "@/features/crm-sites/model/useCrmProjectsTabModel";
+import { withCrmSectionSuspense } from "@/shared/crm/ui";
+import { DashboardDetailSection } from "@/features/crm-dashboard/ui/DashboardDetailSection";
 import {
   LazyAutomationSection,
+  LazyContactsSection,
+  LazyDashboardSection,
   LazyDeploymentsSection,
   LazyInfrastructureSectionView,
+  LazyLogsSection,
   LazyMonitoringSection,
   LazyNotificationsSection,
+  LazyPagesSection,
   LazyPlatformAdminsSection,
   LazyPlatformDashboardV2Section,
   LazyPlatformLogsSection,
   LazyPlatformSettingsSection,
   LazyProjectDetailSection,
+  LazyPromisesSection,
+  LazyReportsSection,
+  LazySettingsSection,
   LazySitesSection,
+  LazyUsersSection,
 } from "./sections/lazySections";
-import type { DashboardPart } from "./sections/sectionTypes";
-import type { InfrastructureSection, ProjectDetailTab } from "../model/platform-nav";
+import type { DashboardPart } from "@/shared/crm/ui";
+import type { InfrastructureSection } from "../model/platform-nav";
 
-type CrmWorkspace = ReturnType<typeof useCrmWorkspace>;
+export function CrmTabContent() {
+  const nav = useCrmWorkspaceNavigation();
+  const chrome = useCrmWorkspaceChromeState();
+  const filters = useCrmWorkspaceFilters();
+  const siteOps = useCrmWorkspaceSiteOps();
+  const adminOps = useCrmWorkspaceAdminOps();
+  const dataView = useCrmWorkspaceDataView();
 
-export function CrmTabContent({ workspace: ws }: { workspace: CrmWorkspace }) {
   const {
     tab,
-    crmLang,
     dashboardPart,
     projectId,
     projectTab,
     infrastructureSection,
-    platformMetrics,
-    data,
-    ui,
-    genderMetrics,
-    countryMetrics,
-    roleOverview,
-    visibleContacts,
-    selectedUser,
     navigate,
+    handleSwitchWorkspace,
+  } = nav;
+  const { crmLang, ui, isPlatformWorkspace } = chrome;
+  const {
     rowLimitInput,
     setRowLimitInput,
     logDateFrom,
@@ -56,38 +61,20 @@ export function CrmTabContent({ workspace: ws }: { workspace: CrmWorkspace }) {
     setLogDateTo,
     logFilter,
     setLogFilter,
-    siteLogs,
-    usersView,
-    isUserCreateRoute,
-    usersWithMeta,
-    userSearch,
-    setUserSearch,
-    usersOrderBy,
-    setUsersOrderBy,
-    usersOrderDir,
-    setUsersOrderDir,
-    setSelectedUserIdByRoute,
-    setUsersViewByRoute,
-    userForm,
-    setUserForm,
-    handleSaveUser,
-    handleNavigateCreateUser,
-    promisesView,
-    promiseRecords,
-    selectedPromise,
-    setSelectedPromiseIdByRoute,
-    setPromisesViewByRoute,
-    pages,
-    reports,
-    settingsDraft,
-    setSettingsDraft,
-    handleSaveSettings,
     contactSearch,
     setContactSearch,
     contactDateFrom,
     setContactDateFrom,
     contactDateTo,
     setContactDateTo,
+    userSearch,
+    setUserSearch,
+    usersOrderBy,
+    setUsersOrderBy,
+    usersOrderDir,
+    setUsersOrderDir,
+  } = filters;
+  const {
     sites,
     siteForm,
     setSiteForm,
@@ -95,9 +82,21 @@ export function CrmTabContent({ workspace: ws }: { workspace: CrmWorkspace }) {
     handleProvisionSite,
     handleUpdateSite,
     handleDeleteSite,
-    handleSwitchWorkspace,
-    isPlatformWorkspace,
-    platformLogs,
+    deploying,
+    handleDeployPlatform,
+    handleDeploySite,
+  } = siteOps;
+  const {
+    usersView,
+    isUserCreateRoute,
+    usersWithMeta,
+    selectedUser,
+    userForm,
+    setUserForm,
+    setSelectedUserIdByRoute,
+    setUsersViewByRoute,
+    handleSaveUser,
+    handleNavigateCreateUser,
     platformAdmins,
     adminSearch,
     setAdminSearch,
@@ -110,22 +109,50 @@ export function CrmTabContent({ workspace: ws }: { workspace: CrmWorkspace }) {
     currentAdminId,
     canDeletePlatformAdmin,
     handleDeletePlatformAdmin,
-    crmSession,
-    deploying,
-    handleDeployPlatform,
-    handleDeploySite,
-  } = ws;
+  } = adminOps;
+  const {
+    data,
+    platformMetrics,
+    genderMetrics,
+    countryMetrics,
+    roleOverview,
+    visibleContacts,
+    siteLogs,
+    promisesView,
+    promiseRecords,
+    selectedPromise,
+    setSelectedPromiseIdByRoute,
+    setPromisesViewByRoute,
+    pages,
+    reports,
+    settingsDraft,
+    setSettingsDraft,
+    handleSaveSettings,
+    platformLogs,
+  } = dataView;
 
-  const location = useLocation();
+  const projectsTab = useCrmProjectsTabModel({
+    crmLang,
+    projectId,
+    projectTab,
+    navigate,
+    handleSwitchWorkspace,
+    platformMetrics,
+    platformLogs,
+    siteOps: {
+      sites,
+      siteForm,
+      setSiteForm,
+      handleCreateSite,
+      handleProvisionSite,
+      handleUpdateSite,
+      handleDeleteSite,
+      deploying,
+      handleDeploySite,
+    },
+  });
+
   const visibleContactsCount = useMemo(() => visibleContacts.length, [visibleContacts]);
-  const openProjectCreate = useMemo(
-    () => new URLSearchParams(location.search).get("create") === "1",
-    [location.search]
-  );
-  const selectedProject = useMemo(
-    () => sites.find((site) => site.id === projectId) ?? null,
-    [sites, projectId]
-  );
 
   if (tab === "dashboard" && !data) {
     return <section className="crm-page crm-page--loading" aria-busy="true" aria-label="Loading" />;
@@ -163,19 +190,21 @@ export function CrmTabContent({ workspace: ws }: { workspace: CrmWorkspace }) {
         onBack={() => navigate("/crm")}
       />
     ) : (
-      <DashboardSection
-        crmLang={crmLang}
-        selectedUserName={selectedUser?.displayName ?? null}
-        dashboardSubtitle={ui.dashboardSubtitle}
-        counters={data.counters}
-        serverDateTime={data.serverDateTime}
-        serverTimeZone={data.serverTimeZone}
-        genderMetrics={genderMetrics}
-        countryMetrics={countryMetrics}
-        roleOverview={roleOverview}
-        visibleContactsCount={visibleContactsCount}
-        onOpenPart={(part) => navigate(`/crm/dashboard/${part}`)}
-      />
+      withCrmSectionSuspense(
+        <LazyDashboardSection
+          crmLang={crmLang}
+          selectedUserName={selectedUser?.displayName ?? null}
+          dashboardSubtitle={ui.dashboardSubtitle}
+          counters={data.counters}
+          serverDateTime={data.serverDateTime}
+          serverTimeZone={data.serverTimeZone}
+          genderMetrics={genderMetrics}
+          countryMetrics={countryMetrics}
+          roleOverview={roleOverview}
+          visibleContactsCount={visibleContactsCount}
+          onOpenPart={(part) => navigate(`/crm/dashboard/${part}`)}
+        />
+      )
     );
   }
 
@@ -184,12 +213,12 @@ export function CrmTabContent({ workspace: ws }: { workspace: CrmWorkspace }) {
       return withCrmSectionSuspense(
         <LazyProjectDetailSection
           crmLang={crmLang}
-          site={selectedProject}
-          metrics={platformMetrics}
-          platformLogs={platformLogs}
-          tab={(projectTab || "overview") as ProjectDetailTab}
-          onBack={() => navigate("/crm/projects")}
-          onNavigateTab={(nextTab) => navigate(`/crm/projects/${projectId}/${nextTab}`)}
+          site={projectsTab.selectedProject}
+          metrics={projectsTab.platformMetrics}
+          platformLogs={projectsTab.platformLogs}
+          tab={projectsTab.projectTab}
+          onBack={projectsTab.onBackToList}
+          onNavigateTab={projectsTab.onNavigateProjectTab}
           onSwitchToWorkspace={handleSwitchWorkspace}
           onProvision={handleProvisionSite}
           onDeploy={handleDeploySite}
@@ -201,26 +230,18 @@ export function CrmTabContent({ workspace: ws }: { workspace: CrmWorkspace }) {
     return withCrmSectionSuspense(
       <LazySitesSection
         crmLang={crmLang}
-        sites={sites}
-        siteForm={siteForm}
-        setSiteForm={setSiteForm}
-        onCreateSite={handleCreateSite}
-        onProvisionSite={handleProvisionSite}
-        onUpdateSite={handleUpdateSite}
-        onDeleteSite={handleDeleteSite}
-        onSwitchToSiteWorkspace={(workspaceId) => {
-          const site = sites.find((item) => item.workspaceId === workspaceId);
-          if (site) navigate(`/crm/projects/${site.id}`);
-          else handleSwitchWorkspace(workspaceId);
-        }}
-        onOpenProject={(id) => navigate(`/crm/projects/${id}`)}
-        openCreateOnMount={openProjectCreate}
-        listTitle={crmLang === "ru" ? "Проекты" : "Projects"}
-        listSubtitle={
-          crmLang === "ru"
-            ? "Управление проектами и workspace"
-            : "Manage projects and workspaces"
-        }
+        sites={projectsTab.siteOps.sites}
+        siteForm={projectsTab.siteOps.siteForm}
+        setSiteForm={projectsTab.siteOps.setSiteForm}
+        onCreateSite={projectsTab.siteOps.handleCreateSite}
+        onProvisionSite={projectsTab.siteOps.handleProvisionSite}
+        onUpdateSite={projectsTab.siteOps.handleUpdateSite}
+        onDeleteSite={projectsTab.siteOps.handleDeleteSite}
+        onSwitchToSiteWorkspace={projectsTab.onSwitchToSiteWorkspace}
+        onOpenProject={projectsTab.onOpenProject}
+        openCreateOnMount={projectsTab.openProjectCreate}
+        listTitle={projectsTab.listCopy.listTitle}
+        listSubtitle={projectsTab.listCopy.listSubtitle}
       />
     );
   }
@@ -275,8 +296,8 @@ export function CrmTabContent({ workspace: ws }: { workspace: CrmWorkspace }) {
   }
 
   if (tab === "logs" && data) {
-    return (
-      <LogsSection
+    return withCrmSectionSuspense(
+      <LazyLogsSection
         crmLang={crmLang}
         logs={siteLogs}
         logCategories={data.logCategories}
@@ -321,8 +342,8 @@ export function CrmTabContent({ workspace: ws }: { workspace: CrmWorkspace }) {
       );
     }
 
-    return (
-      <UsersSection
+    return withCrmSectionSuspense(
+      <LazyUsersSection
         crmLang={crmLang}
         usersView={usersView}
         isCreateUser={isUserCreateRoute}
@@ -335,7 +356,7 @@ export function CrmTabContent({ workspace: ws }: { workspace: CrmWorkspace }) {
         setUsersOrderDir={setUsersOrderDir}
         setSelectedUserId={setSelectedUserIdByRoute}
         setUsersView={setUsersViewByRoute}
-        selectedUser={ws.selectedUser}
+        selectedUser={selectedUser}
         userForm={userForm}
         setUserForm={setUserForm}
         onSaveUser={handleSaveUser}
@@ -345,8 +366,8 @@ export function CrmTabContent({ workspace: ws }: { workspace: CrmWorkspace }) {
   }
 
   if (tab === "promises") {
-    return (
-      <PromisesSection
+    return withCrmSectionSuspense(
+      <LazyPromisesSection
         crmLang={crmLang}
         promisesView={promisesView}
         promiseRecords={promiseRecords}
@@ -357,8 +378,12 @@ export function CrmTabContent({ workspace: ws }: { workspace: CrmWorkspace }) {
     );
   }
 
-  if (tab === "pages") return <PagesSection crmLang={crmLang} pages={pages} />;
-  if (tab === "reports") return <ReportsSection crmLang={crmLang} reports={reports} />;
+  if (tab === "pages") {
+    return withCrmSectionSuspense(<LazyPagesSection crmLang={crmLang} pages={pages} />);
+  }
+  if (tab === "reports") {
+    return withCrmSectionSuspense(<LazyReportsSection crmLang={crmLang} reports={reports} />);
+  }
 
   if (tab === "settings") {
     if (isPlatformWorkspace && data) {
@@ -373,8 +398,8 @@ export function CrmTabContent({ workspace: ws }: { workspace: CrmWorkspace }) {
       );
     }
 
-    return (
-      <SettingsSection
+    return withCrmSectionSuspense(
+      <LazySettingsSection
         crmLang={crmLang}
         settingsDraft={settingsDraft}
         setSettingsDraft={setSettingsDraft}
@@ -400,8 +425,8 @@ export function CrmTabContent({ workspace: ws }: { workspace: CrmWorkspace }) {
   }
 
   if (tab === "contacts") {
-    return (
-      <ContactsSection
+    return withCrmSectionSuspense(
+      <LazyContactsSection
         crmLang={crmLang}
         visibleContacts={visibleContacts}
         contactSearch={contactSearch}

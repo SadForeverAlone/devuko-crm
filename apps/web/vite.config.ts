@@ -12,6 +12,18 @@ export default defineConfig({
     },
   },
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          if (id.includes("@fortawesome")) return "fontawesome";
+          if (id.includes("react-router")) return "router";
+          if (id.includes("react-dom") || id.includes("/react/")) return "react";
+        },
+      },
+    },
+  },
   server: {
     host: true,
     port: devPort,

@@ -1,17 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import {
   getStoredCrmWorkspaceId,
   PLATFORM_WORKSPACE_ID,
   setStoredCrmWorkspace,
 } from "@/entities/crm";
 import { crmCopy } from "./config";
+import { parseCrmRoute } from "./crm-routes";
 import { resolveWorkspaceDisplay } from "./resolve-workspace-display";
-import { useCrmAuth } from "./useCrmAuth";
-import { useCrmLogsView } from "./useCrmLogsView";
+import { useCrmAuth } from "@/features/crm-auth/model/useCrmAuth";
+import { useCrmFiltersState } from "./useCrmFiltersState";
+import { useCrmLogsView } from "@/features/crm-logs/model/useCrmLogsView";
 import { useCrmNavigation } from "./useCrmNavigation";
 import { useCrmSession } from "./useCrmSession";
-import { useCrmSiteHandlers } from "./useCrmSiteHandlers";
-import { useCrmUserAdminHandlers } from "./useCrmUserAdminHandlers";
+import { useCrmSiteHandlers } from "@/features/crm-sites/model/useCrmSiteHandlers";
+import { useCrmUserAdminHandlers } from "@/features/crm-admin/model/useCrmUserAdminHandlers";
 import { useCrmWorkspaceChrome } from "./useCrmWorkspaceChrome";
 import { useCrmWorkspaceData } from "./useCrmWorkspaceData";
 import { useCrmWorkspaceDerived } from "./useCrmWorkspaceDerived";
@@ -19,19 +22,32 @@ import type { CrmLang } from "./types";
 import { crmTabPathMap } from "./crm-routes";
 
 export function useCrmWorkspace() {
+  const location = useLocation();
+  const routePreview = useMemo(() => parseCrmRoute(location.pathname), [location.pathname]);
   const [crmLang, setCrmLang] = useState<CrmLang>("ru");
-  const [contactSearch, setContactSearch] = useState("");
-  const [contactDateFrom, setContactDateFrom] = useState("");
-  const [contactDateTo, setContactDateTo] = useState("");
-  const [logFilter, setLogFilter] = useState("all");
-  const [logDateFrom, setLogDateFrom] = useState("");
-  const [logDateTo, setLogDateTo] = useState("");
-  const [rowLimitInput, setRowLimitInput] = useState("15");
-  const [userSearch, setUserSearch] = useState("");
-  const [usersOrderBy, setUsersOrderBy] = useState<
-    "createdAt" | "email" | "displayName" | "login"
-  >("createdAt");
-  const [usersOrderDir, setUsersOrderDir] = useState<"asc" | "desc">("desc");
+  const filters = useCrmFiltersState();
+  const {
+    contactSearch,
+    setContactSearch,
+    contactDateFrom,
+    setContactDateFrom,
+    contactDateTo,
+    setContactDateTo,
+    logFilter,
+    setLogFilter,
+    logDateFrom,
+    setLogDateFrom,
+    logDateTo,
+    setLogDateTo,
+    rowLimitInput,
+    setRowLimitInput,
+    userSearch,
+    setUserSearch,
+    usersOrderBy,
+    setUsersOrderBy,
+    usersOrderDir,
+    setUsersOrderDir,
+  } = filters;
   const [activeWorkspaceId, setActiveWorkspaceId] = useState(() => getStoredCrmWorkspaceId());
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
 
@@ -42,8 +58,15 @@ export function useCrmWorkspace() {
     setLogin,
     password,
     setPassword,
+    email,
+    code,
+    setCode,
+    authStep,
     loginError,
-    handleLogin,
+    submitting,
+    handleRequestOtp,
+    handleVerifyOtp,
+    handleBackToCredentials,
     handleLogout,
   } = useCrmAuth({
     crmLang,
@@ -73,6 +96,7 @@ export function useCrmWorkspace() {
     token,
     activeWorkspaceId,
     isPlatformWorkspace,
+    tab: routePreview.tab,
     logFilter,
     logDateFrom,
     logDateTo,
@@ -262,7 +286,12 @@ export function useCrmWorkspace() {
     setLogin,
     password,
     setPassword,
+    email,
+    code,
+    setCode,
+    authStep,
     loginError,
+    submitting,
     data,
     tab,
     dashboardPart,
@@ -356,7 +385,9 @@ export function useCrmWorkspace() {
     handleDeletePlatformAdmin,
     handleSaveSettings,
     handleNavigateCreateUser,
-    handleLogin,
+    handleRequestOtp,
+    handleVerifyOtp,
+    handleBackToCredentials,
     handleLogout,
     handleDeployPlatform,
     handleDeploySite,

@@ -1,14 +1,27 @@
 type SkeletonProps = {
-  width?: string;
-  height?: string;
+  width?: "full" | "sm" | "md" | "lg";
+  height?: "xs" | "sm" | "md" | "lg";
   className?: string;
 };
 
-export function Skeleton({ width = "100%", height = "1rem", className = "" }: SkeletonProps) {
+const WIDTH_CLASS: Record<NonNullable<SkeletonProps["width"]>, string> = {
+  full: "dv-skeleton--w-full",
+  sm: "dv-skeleton--w-sm",
+  md: "dv-skeleton--w-md",
+  lg: "dv-skeleton--w-lg",
+};
+
+const HEIGHT_CLASS: Record<NonNullable<SkeletonProps["height"]>, string> = {
+  xs: "dv-skeleton--h-xs",
+  sm: "dv-skeleton--h-sm",
+  md: "dv-skeleton--h-md",
+  lg: "dv-skeleton--h-lg",
+};
+
+export function Skeleton({ width = "full", height = "sm", className = "" }: SkeletonProps) {
   return (
     <span
-      className={`dv-skeleton ${className}`.trim()}
-      style={{ width, height }}
+      className={`dv-skeleton ${WIDTH_CLASS[width]} ${HEIGHT_CLASS[height]} ${className}`.trim()}
       aria-hidden
     />
   );
@@ -19,9 +32,9 @@ export function SkeletonGrid({ count = 4 }: { count?: number }) {
     <div className="dv-skeleton-grid">
       {Array.from({ length: count }, (_, i) => (
         <div key={i} className="dv-skeleton-card">
-          <Skeleton height="0.75rem" width="40%" />
-          <Skeleton height="1.75rem" width="55%" />
-          <Skeleton height="0.65rem" width="70%" />
+          <Skeleton height="xs" width="sm" />
+          <Skeleton height="lg" width="md" />
+          <Skeleton height="xs" width="lg" />
         </div>
       ))}
     </div>

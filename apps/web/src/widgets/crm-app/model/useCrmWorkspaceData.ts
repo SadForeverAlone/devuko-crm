@@ -1,26 +1,31 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ApiError } from "@/shared/api/http";
+import { useDebouncedValue } from "@/shared/lib/useDebouncedValue";
+import { emitAppNotification } from "@/shared/lib/notify";
+import { clearStoredCrmToken } from "@/entities/crm";
 import {
-  clearStoredCrmToken,
-  getCrmUsers,
-  type CrmAdmin,
-  type CrmOverview,
-  type CrmPlatformLog,
-  type CrmPlatformMetrics,
-  type CrmSite,
-  type CrmWorkspace,
-} from "@/entities/crm";
+  isPlatformWorkspaceId,
+  useCrmCatalogQuery,
+  useCrmContactsQuery,
+  useCrmInvalidateAll,
+  useCrmPagesQuery,
+  useCrmPlatformAdminsQuery,
+  useCrmPlatformLogsQuery,
+  useCrmPlatformMetricsQuery,
+  useCrmPlatformStatusQuery,
+  useCrmPromisesQuery,
+  useCrmReportsQuery,
+  useCrmSiteOverviewQuery,
+  useCrmUsersQuery,
+} from "@/shared/crm/model";
+import type { CrmTab } from "@/shared/crm/model/types";
 import { settingsBlueprint } from "./config";
-import {
-  loadCrmWorkspaceData,
-} from "./load-crm-workspace-data";
-
-type CrmUserList = Awaited<ReturnType<typeof getCrmUsers>>;
 
 type UseCrmWorkspaceDataInput = {
   token: string;
   activeWorkspaceId: string;
   isPlatformWorkspace: boolean;
+  tab: CrmTab;
   logFilter: string;
   logDateFrom: string;
   logDateTo: string;
@@ -33,10 +38,26 @@ type UseCrmWorkspaceDataInput = {
   onUnauthorized: () => void;
 };
 
+function handleQueryError(error: unknown, onUnauthorized: () => void) {
+  if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+    clearStoredCrmToken();
+    onUnauthorized();
+    return;
+  }
+  const message =
+    error instanceof ApiError
+      ? error.message
+      : error instanceof Error
+        ? error.message
+        : "Failed to load workspace data";
+  emitAppNotification(message);
+}
+
 export function useCrmWorkspaceData({
   token,
   activeWorkspaceId,
   isPlatformWorkspace,
+  tab,
   logFilter,
   logDateFrom,
   logDateTo,
@@ -48,149 +69,147 @@ export function useCrmWorkspaceData({
   usersOrderDir,
   onUnauthorized,
 }: UseCrmWorkspaceDataInput) {
-  const [data, setData] = useState<CrmOverview | null>(null);
-  const [users, setUsers] = useState<CrmUserList>([]);
-  const [platformAdmins, setPlatformAdmins] = useState<CrmAdmin[]>([]);
-  const [contacts, setContacts] = useState<Awaited<ReturnType<typeof import("@/entities/crm").getCrmContacts>>>([]);
-  const [promises, setPromises] = useState<Awaited<ReturnType<typeof import("@/entities/crm").getCrmPromises>>>([]);
-  const [pages, setPages] = useState<Awaited<ReturnType<typeof import("@/entities/crm").getCrmPages>>>([]);
-  const [reports, setReports] = useState<Awaited<ReturnType<typeof import("@/entities/crm").getCrmReports>>>([]);
-  const [workspaces, setWorkspaces] = useState<CrmWorkspace[]>([]);
-  const [sites, setSites] = useState<CrmSite[]>([]);
-  const [platformLogs, setPlatformLogs] = useState<CrmPlatformLog[]>([]);
-  const [platformMetrics, setPlatformMetrics] = useState<CrmPlatformMetrics | null>(null);
   const [settingsDraft, setSettingsDraft] = useState<Record<string, string>>({});
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  const applyLoadResult = useCallback((result: Awaited<ReturnType<typeof loadCrmWorkspaceData>>) => {
-    setWorkspaces(result.workspaces);
-    setSites(result.sites);
+  const debouncedLogFilter = useDebouncedValue(logFilter, 300);
+  const debouncedContactSearch = useDebouncedValue(contactSearch, 300);
+  const debouncedUserSearch = useDebouncedValue(userSearch, 300);
 
-    if (result.kind === "platform") {
-      setPlatformMetrics(result.platformMetrics);
-      setPlatformAdmins(result.platformAdmins);
-      setPlatformLogs(result.platformLogs);
-      setData(result.data);
-      setUsers([]);
-      setContacts([]);
-      setPromises([]);
-      setPages([]);
-      setReports([]);
+  const enabled = Boolean(token);
+  const platform = isPlatformWorkspace || isPlatformWorkspaceId(activeWorkspaceId);
+  const siteEnabled = enabled && !platform;
+
+  const catalogQuery = useCrmCatalogQuery({ enabled });
+  const platformStatusQuery = useCrmPlatformStatusQuery({ enabled: enabled && platform });
+  const metricsQuery = useCrmPlatformMetricsQuery({ enabled: enabled && platform, tab });
+  const adminsQuery = useCrmPlatformAdminsQuery({ enabled: enabled && platform, tab });
+  const platformLogsQuery = useCrmPlatformLogsQuery({ enabled: enabled && platform, tab });
+
+  const overviewFilters = {
+    logFilter: debouncedLogFilter,
+    logDateFrom,
+    logDateTo,
+    contactSearch: debouncedContactSearch,
+  };
+  const overviewQuery = useCrmSiteOverviewQuery({
+    enabled: siteEnabled,
+    workspaceId: activeWorkspaceId,
+    tab,
+    filters: overviewFilters,
+  });
+
+  const usersFilters = {
+    userSearch: debouncedUserSearch,
+    usersOrderBy,
+    usersOrderDir,
+  };
+  const usersQuery = useCrmUsersQuery({
+    enabled: siteEnabled,
+    workspaceId: activeWorkspaceId,
+    tab,
+    filters: usersFilters,
+  });
+
+  const contactsFilters = {
+    contactSearch: debouncedContactSearch,
+    contactDateFrom,
+    contactDateTo,
+  };
+  const contactsQuery = useCrmContactsQuery({
+    enabled: siteEnabled,
+    workspaceId: activeWorkspaceId,
+    tab,
+    filters: contactsFilters,
+  });
+
+  const promisesQuery = useCrmPromisesQuery({
+    enabled: siteEnabled,
+    workspaceId: activeWorkspaceId,
+    tab,
+  });
+  const pagesQuery = useCrmPagesQuery({
+    enabled: siteEnabled,
+    workspaceId: activeWorkspaceId,
+    tab,
+  });
+  const reportsQuery = useCrmReportsQuery({
+    enabled: siteEnabled,
+    workspaceId: activeWorkspaceId,
+    tab,
+  });
+
+  const load = useCrmInvalidateAll();
+
+  useEffect(() => {
+    const errors = [
+      catalogQuery.error,
+      platformStatusQuery.error,
+      metricsQuery.error,
+      adminsQuery.error,
+      platformLogsQuery.error,
+      overviewQuery.error,
+      usersQuery.error,
+      contactsQuery.error,
+      promisesQuery.error,
+      pagesQuery.error,
+      reportsQuery.error,
+    ].filter(Boolean);
+
+    if (errors.length === 0) {
+      setLoadError(null);
+      return;
+    }
+    const error = errors[0];
+    handleQueryError(error, onUnauthorized);
+    setLoadError(error instanceof Error ? error.message : "Failed to load workspace data");
+  }, [
+    catalogQuery.error,
+    platformStatusQuery.error,
+    metricsQuery.error,
+    adminsQuery.error,
+    platformLogsQuery.error,
+    overviewQuery.error,
+    usersQuery.error,
+    contactsQuery.error,
+    promisesQuery.error,
+    pagesQuery.error,
+    reportsQuery.error,
+    onUnauthorized,
+  ]);
+
+  useEffect(() => {
+    if (platform) {
       setSettingsDraft({});
       return;
     }
-
-    setData(result.data);
-    setUsers(result.users);
-    setContacts(result.contacts);
-    setPromises(result.promises);
-    setPages(result.pages);
-    setReports(result.reports);
+    const settings = overviewQuery.data?.settings;
+    if (!settings) return;
     setSettingsDraft((prev) => {
-      const fromApi = Object.fromEntries((result.data.settings ?? []).map((item) => [item.key, item.value]));
+      const fromApi = Object.fromEntries(settings.map((item) => [item.key, item.value]));
       return Object.fromEntries(
         settingsBlueprint.map((item) => [item.key, fromApi[item.key] ?? prev[item.key] ?? ""])
       );
     });
-  }, []);
+  }, [platform, overviewQuery.data?.settings]);
 
-  const load = useCallback(async () => {
-    const result = await loadCrmWorkspaceData(activeWorkspaceId, {
-      logFilter,
-      logDateFrom,
-      logDateTo,
-      contactSearch,
-      contactDateFrom,
-      contactDateTo,
-      userSearch,
-      usersOrderBy,
-      usersOrderDir,
-    });
-    applyLoadResult(result);
-  }, [
-    activeWorkspaceId,
-    applyLoadResult,
-    logFilter,
-    logDateFrom,
-    logDateTo,
-    contactSearch,
-    contactDateFrom,
-    contactDateTo,
-    userSearch,
-    usersOrderBy,
-    usersOrderDir,
-  ]);
-
-  useEffect(() => {
-    if (!token) {
-      return;
-    }
-    let cancelled = false;
-    const run = async () => {
-      try {
-        const result = await loadCrmWorkspaceData(activeWorkspaceId, {
-          logFilter,
-          logDateFrom,
-          logDateTo,
-          contactSearch,
-          contactDateFrom,
-          contactDateTo,
-          userSearch,
-          usersOrderBy,
-          usersOrderDir,
-        });
-        if (!cancelled) {
-          applyLoadResult(result);
-        }
-      } catch (error) {
-        if (cancelled) return;
-        if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
-          clearStoredCrmToken();
-          onUnauthorized();
-        }
-      }
-    };
-    void run();
-    const pollMs = isPlatformWorkspace ? 60_000 : 120_000;
-    const poll = window.setInterval(() => {
-      if (!cancelled) {
-        void run();
-      }
-    }, pollMs);
-    return () => {
-      cancelled = true;
-      window.clearInterval(poll);
-    };
-  }, [
-    token,
-    activeWorkspaceId,
-    isPlatformWorkspace,
-    logFilter,
-    logDateFrom,
-    logDateTo,
-    contactSearch,
-    contactDateFrom,
-    contactDateTo,
-    userSearch,
-    usersOrderBy,
-    usersOrderDir,
-    applyLoadResult,
-    onUnauthorized,
-  ]);
+  const data = platform ? (platformStatusQuery.data ?? null) : (overviewQuery.data ?? null);
 
   return {
     data,
-    users,
-    platformAdmins,
-    contacts,
-    promises,
-    pages,
-    reports,
-    workspaces,
-    sites,
-    platformLogs,
-    platformMetrics,
+    users: usersQuery.data ?? [],
+    platformAdmins: adminsQuery.data ?? [],
+    contacts: contactsQuery.data ?? [],
+    promises: promisesQuery.data ?? [],
+    pages: pagesQuery.data ?? [],
+    reports: reportsQuery.data ?? [],
+    workspaces: catalogQuery.data?.workspaces ?? [],
+    sites: catalogQuery.data?.sites ?? [],
+    platformLogs: platformLogsQuery.data ?? [],
+    platformMetrics: metricsQuery.data ?? null,
     settingsDraft,
     setSettingsDraft,
+    loadError,
     load,
   };
 }

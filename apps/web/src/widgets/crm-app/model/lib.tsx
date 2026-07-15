@@ -2,7 +2,7 @@ import type { Dispatch, SetStateAction } from "react";
 import type { getCrmPromises } from "@/entities/crm";
 import { crmCopy } from "./i18n";
 import type { UserRoleCode } from "./i18n";
-import type { CrmLang, CrmLog, CrmPromiseApiRecord, CrmUser, PromiseRecord } from "./types";
+import type { CrmLang, CrmUser, PromiseRecord } from "./types";
 
 export const CRM_LOCALE_TAGS: Record<CrmLang, string> = {
   ru: "ru-RU",
@@ -44,9 +44,9 @@ export function getUserRoleCode(user: CrmUser): UserRoleCode {
 }
 
 export function inferGender(user: CrmUser) {
-  const seed = stringToNumber(`${user.displayName}-${user.email}`);
-  const variants = ["Женщины", "Мужчины", "Не указано"];
-  return variants[seed % variants.length] ?? variants[0];
+  const stored = user.adminNote?.match(/gender[:=]\s*(\S+)/i)?.[1];
+  if (stored) return stored;
+  return "Не указано";
 }
 
 export function inferCountry(user: CrmUser) {
@@ -54,12 +54,7 @@ export function inferCountry(user: CrmUser) {
   if (stored) {
     return stored;
   }
-  const source = `${user.email} ${user.displayName}`.toLowerCase();
-  if (source.includes("berlin") || source.includes(".de")) return "Germany";
-  if (source.includes("ny") || source.includes(".us")) return "USA";
-  if (source.includes("sweden") || source.includes("stockholm")) return "Sweden";
-  const variants = ["Russia", "Kazakhstan", "Germany", "USA", "Armenia", "Serbia"];
-  return variants[stringToNumber(user.id) % variants.length] ?? "Russia";
+  return "—";
 }
 
 export function buildGenderMetrics(users: Array<CrmUser & { gender: string }>) {
@@ -210,10 +205,6 @@ export function renderLogFilterHeader(
       ) : null}
     </div>
   );
-}
-
-function stringToNumber(value: string) {
-  return [...value].reduce((sum, char) => sum + char.charCodeAt(0), 0);
 }
 
 export { translateCrmStatus } from "./statusLexicon";

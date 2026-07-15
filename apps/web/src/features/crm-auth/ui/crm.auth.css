@@ -1,0 +1,328 @@
+.crm-login__progress {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0 10px;
+  padding: 0 2px;
+}
+
+.crm-login__progress-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #6f6f78;
+  transition: color 0.35s ease;
+}
+
+.crm-login__progress-step--active {
+  color: #f4f4f5;
+}
+
+.crm-login__progress-step--done {
+  color: #c4b5fd;
+}
+
+.crm-login__progress-dot {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 11px;
+  font-weight: 700;
+  transition:
+    transform 0.35s ease,
+    border-color 0.35s ease,
+    background 0.35s ease,
+    box-shadow 0.35s ease;
+}
+
+.crm-login__progress-step--active .crm-login__progress-dot {
+  border-color: rgba(139, 92, 246, 0.55);
+  background: linear-gradient(145deg, rgba(139, 92, 246, 0.35), rgba(109, 40, 217, 0.2));
+  box-shadow: 0 0 18px rgba(139, 92, 246, 0.35);
+  transform: scale(1.05);
+}
+
+.crm-login__progress-step--done .crm-login__progress-dot {
+  border-color: rgba(139, 92, 246, 0.35);
+  background: rgba(139, 92, 246, 0.18);
+  color: #ddd6fe;
+}
+
+.crm-login__progress-line {
+  width: 56px;
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.crm-login__progress-line::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: linear-gradient(90deg, #8b5cf6, #c4b5fd);
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.crm-login__progress-line--active::after {
+  transform: scaleX(1);
+}
+
+.crm-login__form {
+  position: relative;
+  overflow: hidden;
+}
+
+.crm-login__pane {
+  display: grid;
+  gap: 12px;
+  animation: crm-login-pane-in 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.crm-login__form[data-direction="back"] .crm-login__pane {
+  animation-name: crm-login-pane-back;
+}
+
+@keyframes crm-login-pane-in {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes crm-login-pane-back {
+  from {
+    opacity: 0;
+    transform: translateX(-18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.crm-login__form--shake {
+  animation: crm-login-shake 0.45s ease;
+}
+
+@keyframes crm-login-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-6px);
+  }
+  40%,
+  80% {
+    transform: translateX(6px);
+  }
+}
+
+.crm-login__code-banner {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(139, 92, 246, 0.22);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(25, 25, 27, 0.35));
+  animation: crm-login-banner-in 0.5s ease 0.08s both;
+}
+
+@keyframes crm-login-banner-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.crm-login__code-banner-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(139, 92, 246, 0.2);
+  font-size: 16px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.crm-login__hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #d4d4d8;
+}
+
+.crm-login__alert {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  animation: crm-login-alert-in 0.28s ease;
+}
+
+.crm-login__alert--error {
+  color: #fecaca;
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  background: rgba(127, 29, 29, 0.28);
+}
+
+@keyframes crm-login-alert-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.crm-otp {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.crm-otp__cell {
+  position: relative;
+  aspect-ratio: 0.82;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.crm-otp__cell--filled {
+  border-color: rgba(139, 92, 246, 0.45);
+  background: rgba(139, 92, 246, 0.1);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.16);
+}
+
+.crm-otp__cell:focus-within {
+  border-color: rgba(167, 139, 250, 0.75);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+}
+
+.crm-otp__input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: text;
+}
+
+.crm-otp__glyph {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #f4f4f5;
+  animation: crm-otp-glyph-in 0.22s ease;
+}
+
+.crm-otp__cell:not(.crm-otp__cell--filled) .crm-otp__glyph {
+  color: #52525b;
+  font-weight: 500;
+}
+
+@keyframes crm-otp-glyph-in {
+  from {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.crm-otp--complete .crm-otp__cell {
+  animation: crm-otp-pulse 0.45s ease;
+}
+
+@keyframes crm-otp-pulse {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.04);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.crm-otp--error .crm-otp__cell {
+  border-color: rgba(248, 113, 113, 0.55);
+  background: rgba(127, 29, 29, 0.22);
+}
+
+.crm-btn--loading {
+  position: relative;
+  pointer-events: none;
+}
+
+.crm-btn--loading::after {
+  content: "";
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin-top: -7px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  animation: crm-btn-spin 0.7s linear infinite;
+}
+
+@keyframes crm-btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.devuko-toast--success {
+  border-color: rgba(52, 211, 153, 0.35);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.42),
+    0 0 24px rgba(16, 185, 129, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.devuko-toast--error {
+  border-color: rgba(248, 113, 113, 0.35);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.42),
+    0 0 24px rgba(239, 68, 68, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}

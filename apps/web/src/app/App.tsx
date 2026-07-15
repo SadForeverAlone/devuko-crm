@@ -1,10 +1,10 @@
-import { CrmApp } from "@/widgets/crm-app";
+import { CrmPage } from "@/pages/crm";
 import { DevukoToastStack } from "@/shared/ui/DevukoToastStack";
 
 export function App() {
   return (
     <>
-      <CrmApp />
+      <CrmPage />
       <DevukoToastStack />
     </>
   );

@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { Dispatch, SetStateAction } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { NavigateOptions, To } from "react-router-dom";
 import { setStoredCrmWorkspaceId } from "@/entities/crm";
@@ -90,15 +90,12 @@ export function useCrmNavigation({
       navigate("/crm", { replace: true });
       return;
     }
-    if (tab === "sites") {
-      navigate("/crm/projects", { replace: true });
-      return;
-    }
-    const normalizedPath = location.pathname.replace(/\/+$/, "") || "/crm";
-    if (normalizedPath === "/crm/security") {
-      navigate("/crm/monitoring", { replace: true });
-    }
   }, [isPlatformWorkspace, tab, navigate, location.pathname, activeWorkspaceId]);
+
+  useEffect(() => {
+    const label = tab.charAt(0).toUpperCase() + tab.slice(1);
+    document.title = `Devuko CRM · ${label}`;
+  }, [tab]);
 
   const handleSwitchWorkspace = useCallback(
     (workspaceId: string) => {

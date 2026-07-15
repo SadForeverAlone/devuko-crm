@@ -1,0 +1,46 @@
+import { PlatformPage } from "@/shared/ui/platform";
+import { mockFiles } from "@/widgets/crm-app/model/config";
+import { crmCopy } from "@/widgets/crm-app/model/i18n";
+import { getCrmLocaleTag, getStatusClassName, translateCrmStatus } from "@/widgets/crm-app/model/lib";
+import type { FilesSectionProps } from "@/shared/crm/ui/sectionTypes";
+
+export function FilesSection({ crmLang }: FilesSectionProps) {
+  const ui = crmCopy[crmLang];
+  const dateLocale = getCrmLocaleTag(crmLang);
+  return (
+    <PlatformPage title={ui.filesTitle} subtitle={ui.filesSubtitle}>
+      <article className="crm-panel crm-table-card">
+        <div className="crm-table-wrap">
+          <table className="crm-data-table">
+            <thead>
+              <tr>
+                <th>{ui.filesColId}</th>
+                <th>{ui.filesColTitle}</th>
+                <th>{ui.filesColType}</th>
+                <th>{ui.filesColOwner}</th>
+                <th>{ui.filesColUpdated}</th>
+                <th>{ui.filesColStatus}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {mockFiles.map((file) => (
+                <tr key={file.id}>
+                  <td>{file.id}</td>
+                  <td>{file.title}</td>
+                  <td>{file.type}</td>
+                  <td>{file.owner}</td>
+                  <td>{new Date(file.updatedAt).toLocaleString(dateLocale)}</td>
+                  <td>
+                    <span className={getStatusClassName(file.status)}>
+                      {translateCrmStatus(file.status, crmLang)}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </PlatformPage>
+  );
+}

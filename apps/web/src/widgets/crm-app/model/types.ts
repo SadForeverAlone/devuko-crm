@@ -1,25 +1,6 @@
 import type { getCrmContacts, getCrmOverview, getCrmPromises, getCrmUsers } from "@/entities/crm";
 
-export type CrmTab =
-  | "dashboard"
-  | "logs"
-  | "users"
-  | "promises"
-  | "pages"
-  | "files"
-  | "tasks"
-  | "reports"
-  | "call-tracker"
-  | "settings"
-  | "contacts"
-  | "sites"
-  | "projects"
-  | "infrastructure"
-  | "deployments"
-  | "monitoring"
-  | "automation"
-  | "team"
-  | "notifications";
+export type { CrmTab } from "@/shared/crm/model/types";
 
 export type CrmLang = "ru" | "en";
 

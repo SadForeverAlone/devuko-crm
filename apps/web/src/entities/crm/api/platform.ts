@@ -1,4 +1,4 @@
-import { crmFetch } from "./client";
+import { crmFetch, crmQuery } from "./client";
 import type { CrmPlatformLog, CrmPlatformMetrics, CrmStorageUsage } from "./types";
 
 export async function getCrmPlatformStatus() {
@@ -22,8 +22,6 @@ export async function deployCrmPlatform() {
 }
 
 export async function getCrmPlatformLogs(input?: { limit?: number; offset?: number }) {
-  const params = new URLSearchParams();
-  params.set("limit", String(input?.limit ?? 200));
-  if (input?.offset) params.set("offset", String(input.offset));
-  return crmFetch<CrmPlatformLog[]>(`/admin/crm/platform-logs?${params.toString()}`);
+  const query = crmQuery({ limit: input?.limit ?? 200, offset: input?.offset });
+  return crmFetch<CrmPlatformLog[]>(`/admin/crm/platform-logs?${query}`);
 }

@@ -1,15 +1,21 @@
-import { useLocation } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
+  faBars,
   faChevronDown,
   faGlobe,
   faRightFromBracket,
   faRocket,
+  faXmark,
 } from "@fortawesome/free-solid-svg-icons";
-import type { useCrmWorkspace } from "../model/useCrmWorkspace";
+import { useEffect, useState } from "react";
+import {
+  useCrmWorkspaceChromeState,
+  useCrmWorkspaceNavigation,
+} from "../model/useCrmWorkspaceSlices";
 import { platformNavItems } from "../model/platform-nav";
-import { CrmTabContent } from "./CrmTabContent";
-import { CommandPalette, useCommandPalette } from "./CommandPalette";
+import { useCommandPalette } from "../model/useCommandPalette";
+import { CommandPalette } from "./CommandPalette";
 
 function accountInitials(session: { firstName?: string; lastName?: string; displayName?: string }) {
   const first = session.firstName?.trim()?.[0] ?? "";
@@ -25,41 +31,40 @@ function accountInitials(session: { firstName?: string; lastName?: string; displ
   return source.slice(0, 2).toUpperCase() || "?";
 }
 
-type CrmWorkspace = ReturnType<typeof useCrmWorkspace>;
-
-type CrmAuthenticatedLayoutProps = {
-  workspace: CrmWorkspace;
-};
-
 const navGroupLabels = {
   primary: { ru: "Основное", en: "Core" },
   operations: { ru: "Операции", en: "Operations" },
   system: { ru: "Система", en: "System" },
 } as const;
 
-export function CrmAuthenticatedLayout({ workspace: ws }: CrmAuthenticatedLayoutProps) {
+export function CrmAuthenticatedLayout() {
+  const nav = useCrmWorkspaceNavigation();
+  const chrome = useCrmWorkspaceChromeState();
   const location = useLocation();
   const commandPalette = useCommandPalette();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const {
     crmLang,
     setCrmLang,
-    tab,
-    ui,
     crmSession,
-    navigate,
-    crmNavItems,
-    crmShortcutItems,
-    crmTabPathMap,
-    handleLogout,
+    ui,
     workspaces,
     activeWorkspace,
     activeWorkspaceDisplay,
     workspaceMenuOpen,
     setWorkspaceMenuOpen,
-    handleSwitchWorkspace,
+    handleLogout,
     activeWorkspaceId,
     isPlatformWorkspace,
-  } = ws;
+  } = chrome;
+  const {
+    tab,
+    navigate,
+    crmNavItems,
+    crmShortcutItems,
+    crmTabPathMap,
+    handleSwitchWorkspace,
+  } = nav;
 
   const workspaceLabel = activeWorkspaceDisplay.label;
   const isPlatformActive = activeWorkspaceDisplay.kind === "platform";
@@ -67,6 +72,11 @@ export function CrmAuthenticatedLayout({ workspace: ws }: CrmAuthenticatedLayout
   const platformWorkspaces = workspaces.filter((item) => item.kind === "platform");
   const siteWorkspaces = workspaces.filter((item) => item.kind === "site");
   const pageKey = `${activeWorkspaceId}:${location.pathname}`;
+  const menuLabel = crmLang === "ru" ? "Меню" : "Menu";
+
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname, activeWorkspaceId]);
 
   const navGroups = isPlatformWorkspace
     ? (["primary", "operations", "system"] as const).map((group) => ({
@@ -77,7 +87,17 @@ export function CrmAuthenticatedLayout({ workspace: ws }: CrmAuthenticatedLayout
     : [{ group: "primary" as const, label: "", items: crmNavItems }];
 
   return (
-    <main className="crm-root">
+    <main className={sidebarOpen ? "crm-root crm-root--sidebar-open" : "crm-root"}>
+      {sidebarOpen ? (
+        <div
+          className="crm-sidebar-backdrop"
+          role="presentation"
+          onClick={() => setSidebarOpen(false)}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") setSidebarOpen(false);
+          }}
+        />
+      ) : null}
       <aside className="crm-sidebar">
         <div className="crm-sidebar__body">
           <div className="crm-sidebar__brand">
@@ -170,7 +190,13 @@ export function CrmAuthenticatedLayout({ workspace: ws }: CrmAuthenticatedLayout
                         ? "crm-nav__item crm-nav__item--active"
                         : "crm-nav__item"
                     }
-                    onClick={() => navigate(crmTabPathMap[item.key === "sites" ? "projects" : item.key])}
+                    aria-current={
+                      tab === item.key || (item.key === "projects" && tab === "sites") ? "page" : undefined
+                    }
+                    onClick={() => {
+                      navigate(crmTabPathMap[item.key === "sites" ? "projects" : item.key]);
+                      setSidebarOpen(false);
+                    }}
                   >
                     <span className="crm-nav__icon">
                       <FontAwesomeIcon icon={item.icon} />
@@ -193,7 +219,11 @@ export function CrmAuthenticatedLayout({ workspace: ws }: CrmAuthenticatedLayout
                     className={
                       tab === item.key ? "crm-shortcut crm-shortcut--active" : "crm-shortcut"
                     }
-                    onClick={() => navigate(crmTabPathMap[item.key])}
+                    aria-current={tab === item.key ? "page" : undefined}
+                    onClick={() => {
+                      navigate(crmTabPathMap[item.key]);
+                      setSidebarOpen(false);
+                    }}
                   >
                     <span className="crm-shortcut__icon">
                       <FontAwesomeIcon icon={item.icon} />
@@ -211,6 +241,7 @@ export function CrmAuthenticatedLayout({ workspace: ws }: CrmAuthenticatedLayout
               <button
                 type="button"
                 className={crmLang === "ru" ? "crm-lang-btn crm-lang-btn--active" : "crm-lang-btn"}
+                aria-pressed={crmLang === "ru"}
                 onClick={() => setCrmLang("ru")}
               >
                 Русский
@@ -218,6 +249,7 @@ export function CrmAuthenticatedLayout({ workspace: ws }: CrmAuthenticatedLayout
               <button
                 type="button"
                 className={crmLang === "en" ? "crm-lang-btn crm-lang-btn--active" : "crm-lang-btn"}
+                aria-pressed={crmLang === "en"}
                 onClick={() => setCrmLang("en")}
               >
                 English
@@ -249,7 +281,16 @@ export function CrmAuthenticatedLayout({ workspace: ws }: CrmAuthenticatedLayout
       </aside>
 
       <section className="crm-main">
-        <CrmTabContent key={pageKey} workspace={ws} />
+        <button
+          type="button"
+          className="crm-mobile-nav-toggle"
+          aria-expanded={sidebarOpen}
+          aria-label={menuLabel}
+          onClick={() => setSidebarOpen((open) => !open)}
+        >
+          <FontAwesomeIcon icon={sidebarOpen ? faXmark : faBars} />
+        </button>
+        <Outlet key={pageKey} />
       </section>
 
       <CommandPalette
