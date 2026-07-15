@@ -21,9 +21,175 @@ jobs:
       - name: Install dependencies
         working-directory: apps/${{ matrix.app }}
         run: npm ci
+      - name: Audit dependencies
+        working-directory: apps/${{ matrix.app }}
+        run: npm audit --audit-level=high
       - name: Typecheck
         working-directory: apps/${{ matrix.app }}
         run: npm run typecheck
       - name: Lint
         working-directory: apps/${{ matrix.app }}
         run: npm run lint
+      - name: Test
+        if: matrix.app == 'api'
+        working-directory: apps/api
+        run: npm test
+      - name: Build
+        working-directory: apps/${{ matrix.app }}
+        run: npm run build
+
+  api-db:
+    runs-on: ubuntu-latest
+    needs: check
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: devuko
+          POSTGRES_PASSWORD: ci-test-postgres-password
+          POSTGRES_DB: devuko_crm
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U devuko -d devuko_crm"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: apps/api
+    env:
+      CRM_DB_INTEGRATION: "true"
+      DATABASE_URL: postgresql://devuko:ci-test-postgres-password@127.0.0.1:5432/devuko_crm
+      POSTGRES_PASSWORD: ci-test-postgres-password
+      JWT_SECRET: ci-test-jwt-secret-with-32-characters-min
+      DEVUKO_PROXY_SECRET: ci-test-proxy-secret-with-32-chars-min
+      CRM_ADMIN_EMAIL: ci-admin@devuko.test
+      CRM_ADMIN_PASSWORD: CiAdminPassw0rd!
+      AUTH_OTP_ECHO: "true"
+      DEV_ALLOW_WEAK_JWT: "true"
+      DEVUKO_CRM_DEPLOY_ENABLED: "false"
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "25"
+          cache: npm
+          cache-dependency-path: apps/api/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: DB integration tests
+        run: npm run test:db
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: check
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "25"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Build
+        run: npm run build
+      - name: E2E smoke
+        run: npx playwright test
+
+  e2e-auth:
+    runs-on: ubuntu-latest
+    needs: check
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: devuko
+          POSTGRES_PASSWORD: ci-test-postgres-password
+          POSTGRES_DB: devuko_crm
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U devuko -d devuko_crm"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://devuko:ci-test-postgres-password@127.0.0.1:5432/devuko_crm
+      POSTGRES_PASSWORD: ci-test-postgres-password
+      JWT_SECRET: ci-test-jwt-secret-with-32-characters-min
+      DEVUKO_PROXY_SECRET: ci-test-proxy-secret-with-32-chars-min
+      CRM_ADMIN_EMAIL: ci-admin@devuko.test
+      CRM_ADMIN_PASSWORD: CiAdminPassw0rd!
+      AUTH_OTP_ECHO: "true"
+      DEV_ALLOW_WEAK_JWT: "true"
+      DEVUKO_CRM_DEPLOY_ENABLED: "false"
+      NODE_ENV: test
+      PLAYWRIGHT_OTP_ECHO: "true"
+      PLAYWRIGHT_CRM_LOGIN: ci-admin@devuko.test
+      PLAYWRIGHT_CRM_PASSWORD: CiAdminPassw0rd!
+      PLAYWRIGHT_API_URL: http://127.0.0.1:8095
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "25"
+          cache: npm
+          cache-dependency-path: |
+            apps/api/package-lock.json
+            apps/web/package-lock.json
+      - name: Install API dependencies
+        working-directory: apps/api
+        run: npm ci
+      - name: Build API
+        working-directory: apps/api
+        run: npm run build
+      - name: Start API for auth e2e
+        working-directory: apps/api
+        run: |
+          node dist/main.js &
+          echo $! > /tmp/crm-api.pid
+          for i in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:8095/health >/dev/null; then
+              echo "API ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "API failed to start" >&2
+          exit 1
+      - name: Install web dependencies
+        working-directory: apps/web
+        run: npm ci
+      - name: Install Playwright Chromium
+        working-directory: apps/web
+        run: npx playwright install --with-deps chromium
+      - name: Auth e2e
+        working-directory: apps/web
+        run: npx playwright test e2e/auth.spec.ts
+      - name: Stop API
+        if: always()
+        run: kill "$(cat /tmp/crm-api.pid)" 2>/dev/null || true
+
+  infra:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Shellcheck scripts
+        run: |
+          shellcheck infra/deploy/*.sh infra/nginx/*.sh platform/bin/*.sh
+      - name: Validate docker compose
+        env:
+          POSTGRES_PASSWORD: ci-test-postgres-password
+          JWT_SECRET: ci-test-jwt-secret-with-32-characters-min
+          DEVUKO_PROXY_SECRET: ci-test-proxy-secret-with-32-chars-min
+        run: docker compose -f docker/docker-compose.yml config

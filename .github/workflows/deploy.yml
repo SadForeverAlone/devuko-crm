@@ -1,0 +1,60 @@
+name: Deploy production
+
+on:
+  push:
+    branches: [master]
+
+concurrency:
+  group: deploy-devuko-crm
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Prepare deploy SSH key
+        env:
+          DEPLOY_KEY: ${{ secrets.DEVUKO_CRM_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${DEPLOY_KEY// }" ]]; then
+            echo "DEVUKO_CRM_DEPLOY_KEY is empty" >&2
+            exit 1
+          fi
+          mkdir -p /home/runner/.ssh
+          key_file=/home/runner/.ssh/deploy_key
+          compact=$(printf '%s' "$DEPLOY_KEY" | tr -d '\r\n')
+          if printf '%s' "$compact" | base64 -d > "$key_file" 2>/dev/null; then
+            echo "Decoded base64 deploy key"
+          else
+            printf '%s\n' "$DEPLOY_KEY" > "$key_file"
+            echo "Using raw PEM deploy key"
+          fi
+          chmod 600 "$key_file"
+          ssh-keygen -y -f "$key_file" >/dev/null
+
+      - name: SSH deploy
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          DEVUKO_CRM_REPO_ROOT: ${{ secrets.DEVUKO_CRM_REPO_ROOT }}
+        with:
+          host: ${{ secrets.DEVUKO_CRM_DEPLOY_HOST }}
+          username: ${{ secrets.DEVUKO_CRM_DEPLOY_USER }}
+          key_path: /home/runner/.ssh/deploy_key
+          envs: DEVUKO_CRM_REPO_ROOT
+          script_stop: true
+          script: |
+            set -euo pipefail
+            : "${DEVUKO_CRM_REPO_ROOT:?set GitHub secret DEVUKO_CRM_REPO_ROOT (absolute path to repo on server)}"
+            export DEPLOY_BRANCH=master
+            export VITE_PUBLIC_URL=https://crm.devuko.ru
+            echo "==> deploy from ${DEVUKO_CRM_REPO_ROOT}"
+            cd "${DEVUKO_CRM_REPO_ROOT}"
+            echo "==> git sync (hard reset to origin/${DEPLOY_BRANCH})"
+            git fetch origin "${DEPLOY_BRANCH}"
+            git reset --hard "origin/${DEPLOY_BRANCH}"
+            bash "${DEVUKO_CRM_REPO_ROOT}/infra/deploy/deploy.sh"
+            echo "==> smoke test API"
+            curl -fsS "http://127.0.0.1:8095/health" | grep -q '"ok":true'
+            echo "==> smoke test HTTPS"
+            curl -fsS "https://crm.devuko.ru/health" | grep -q '"ok":true'
