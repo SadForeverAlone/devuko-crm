@@ -14,6 +14,16 @@ describe("isCsrfValid", () => {
     expect(isCsrfValid({ method: "POST" })).toBe(true);
   });
 
+  it("allows crm-auth routes even with a session cookie", () => {
+    expect(
+      isCsrfValid({
+        method: "POST",
+        url: "/crm-auth/otp/request",
+        cookies: { [CRM_AUTH_COOKIE]: "session-token" },
+      })
+    ).toBe(true);
+  });
+
   it("requires matching CSRF pair for cookie sessions", () => {
     expect(
       isCsrfValid({

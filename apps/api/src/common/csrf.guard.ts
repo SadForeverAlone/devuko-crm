@@ -9,6 +9,7 @@ export class CsrfGuard implements CanActivate {
     if (
       !isCsrfValid({
         method: req.method,
+        url: req.url,
         cookies: req.cookies,
         headers: req.headers as Record<string, string | string[] | undefined>,
       })

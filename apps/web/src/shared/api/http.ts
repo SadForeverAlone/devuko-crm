@@ -30,12 +30,14 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
     headers.set("Content-Type", "application/json");
   }
   const method = (init?.method ?? "GET").toUpperCase();
+  // Attach CSRF when the cookie exists (set after OTP/login). Do not block
+  // unauthenticated POSTs like /crm-auth/otp/* — the API only enforces CSRF
+  // when the session cookie is present.
   if (MUTATING_METHODS.has(method) && !headers.has(CRM_CSRF_HEADER)) {
     const csrfToken = readCsrfToken();
-    if (!csrfToken) {
-      throw new ApiError(0, "Missing CSRF token — refresh the page and sign in again");
+    if (csrfToken) {
+      headers.set(CRM_CSRF_HEADER, csrfToken);
     }
-    headers.set(CRM_CSRF_HEADER, csrfToken);
   }
   const res = await fetch(url, { credentials: "include", ...init, headers });
   if (!res.ok) {
