@@ -30,7 +30,7 @@ COMPOSE_PARALLEL_LIMIT=1 "${COMPOSE[@]}" build web
 
 echo "==> start full stack"
 compose_up() {
-  "${COMPOSE[@]}" up -d --force-recreate --remove-orphans "$@"
+  "${COMPOSE[@]}" up -d --force-recreate --remove-orphans
 }
 
 if ! compose_up; then
